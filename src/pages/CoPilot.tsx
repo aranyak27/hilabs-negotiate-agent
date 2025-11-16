@@ -895,7 +895,6 @@ Market Positioning
               </Card>
             </TabsContent>
           </Tabs>
-        </div>
       </main>
 
       <CoPilotOutputModal
