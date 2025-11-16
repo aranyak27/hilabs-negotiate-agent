@@ -369,11 +369,14 @@ const UploadContract = () => {
                       <Info className="w-4 h-4 text-muted-foreground" />
                     </TooltipTrigger>
                     <TooltipContent>
-                      <p className="w-64">Adjust rates and escalation to see real-time financial impact</p>
+                      <p className="w-64">Edit values to test counter-proposals and see real-time financial impact</p>
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
               </h2>
+              <p className="text-sm text-muted-foreground mb-4">
+                Edit values below to test counter-proposals and see real-time financial impact
+              </p>
               <div className="space-y-4 mb-6">
                 <div className="space-y-2">
                   <Label htmlFor="rate" className="text-sm">Base Rate (Per Diem)</Label>
@@ -673,14 +676,26 @@ const UploadContract = () => {
 
           {/* Action Buttons */}
           <div className="flex items-center justify-between pt-4 border-t border-border">
-            <Button variant="outline" onClick={() => setShowResults(false)}>
+            <button 
+              onClick={() => setShowResults(false)}
+              className="text-sm text-primary hover:underline"
+            >
               Upload Another Contract
-            </Button>
-            <div className="flex gap-2">
+            </button>
+            <div className="flex gap-2 items-center">
+              {resolvedAlerts.length < alerts.filter(a => a.severity === "high").length && (
+                <p className="text-sm text-amber-600 mr-2">
+                  ⚠️ Resolve all high-severity issues to proceed
+                </p>
+              )}
               <Button variant="outline" onClick={() => navigate("/redlining")} className="gap-2">
                 Start Redlining
               </Button>
-              <Button onClick={() => navigate("/approvals")} className="gap-2 hover-scale">
+              <Button 
+                onClick={() => navigate("/approvals")} 
+                className="gap-2 hover-scale"
+                disabled={resolvedAlerts.length < alerts.filter(a => a.severity === "high").length}
+              >
                 Submit for Approval
               </Button>
             </div>

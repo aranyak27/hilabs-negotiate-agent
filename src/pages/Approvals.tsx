@@ -4,15 +4,16 @@ import WorkflowProgress from "@/components/WorkflowProgress";
 import NextActionBanner from "@/components/NextActionBanner";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { CheckCircle, Clock, XCircle, ArrowRight, Bell, Mail } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 
 const approvers = [
-  { role: "Negotiator", name: "Sarah Chen", status: "approved", date: "2025-01-15 14:30", notes: "Counter-proposals aligned with playbook" },
-  { role: "Legal", name: "Raj Malhotra", status: "pending", date: null, notes: null },
-  { role: "Finance", name: "Priya Sharma", status: "pending", date: null, notes: null },
-  { role: "Leadership", name: "Dr. Anil Kumar", status: "pending", date: null, notes: null },
+  { role: "Negotiator", name: "Sarah Chen", status: "approved", date: "2025-01-15 14:30", notes: "Counter-proposals aligned with playbook", dueDate: "2025-01-15" },
+  { role: "Legal", name: "Raj Malhotra", status: "pending", date: null, notes: null, dueDate: "2025-01-18", overdue: true },
+  { role: "Finance", name: "Priya Sharma", status: "pending", date: null, notes: null, dueDate: "2025-01-19", overdue: true },
+  { role: "Leadership", name: "Dr. Anil Kumar", status: "pending", date: null, notes: null, dueDate: "2025-01-20", overdue: false },
 ];
 
 const Approvals = () => {
@@ -57,10 +58,10 @@ const Approvals = () => {
 
           <NextActionBanner
             title="Pending Approvals"
-            description="Waiting for Legal and Finance review - send reminder if needed"
+            description="Waiting for Legal and Finance review - 2 days overdue"
             action="Send Reminder to All"
             onAction={() => handleReminder("All pending approvers")}
-            variant="default"
+            variant="urgent"
           />
 
           <Card className="p-6 border-border">
@@ -68,7 +69,7 @@ const Approvals = () => {
               <h2 className="text-xl font-semibold text-foreground">Approval Matrix</h2>
               <Button onClick={handleAutoEscalate} size="sm" variant="outline" className="gap-2">
                 <Bell className="w-4 h-4" />
-                Enable Auto-Escalation
+                Enable Auto-Escalation (3 days)
               </Button>
             </div>
             <div className="space-y-4">
@@ -88,6 +89,11 @@ const Approvals = () => {
                     <div className="flex items-center gap-2 mb-1">
                       <p className="font-semibold text-foreground">{approver.name}</p>
                       <span className="text-xs text-muted-foreground">• {approver.role}</span>
+                      {approver.overdue && (
+                        <Badge variant="outline" className="bg-red-100 text-red-700 border-red-200">
+                          OVERDUE
+                        </Badge>
+                      )}
                     </div>
                     {approver.status === "approved" && (
                       <div>
@@ -108,8 +114,16 @@ const Approvals = () => {
                     )}
                   </div>
 
-                  {approver.status === "pending" && (
+                   {approver.status === "pending" && (
                     <div className="flex gap-2">
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => navigate("/upload")}
+                        className="gap-1"
+                      >
+                        View Contract
+                      </Button>
                       <Button 
                         size="sm" 
                         variant="outline"
