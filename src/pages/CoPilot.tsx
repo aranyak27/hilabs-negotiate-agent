@@ -1015,73 +1015,9 @@ HiLabs Contract Negotiation Team`;
                   <span className="text-xs text-center font-medium">Counter-Proposal</span>
                 </Button>
               </div>
-
-              {/* Contract Context Panel */}
-              <Card className="bg-accent/50 border-border">
-                <div className="p-4">
-                  <div className="flex items-start justify-between mb-3">
-                    <div>
-                      <h3 className="text-sm font-semibold text-foreground mb-1">{contractContext.provider}</h3>
-                      <p className="text-xs text-muted-foreground flex items-center gap-1">
-                        <Calendar className="w-3 h-3" />
-                        Last modified: {contractContext.lastModified}
-                      </p>
-                    </div>
-                    <Badge variant={contractContext.riskLevel === "high" ? "destructive" : "secondary"}>
-                      {contractContext.riskLevel.toUpperCase()} RISK
-                    </Badge>
-                  </div>
-                  <div className="grid grid-cols-2 gap-3 mb-3">
-                    <div className="flex items-center gap-2">
-                      <AlertCircle className="w-4 h-4 text-destructive" />
-                      <span className="text-xs text-foreground"><span className="font-semibold">{contractContext.openRisks}</span> open risks</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <TrendingUp className="w-4 h-4 text-green-600" />
-                      <span className="text-xs text-foreground">Potential savings: <span className="font-semibold">{contractContext.potentialSavings}</span></span>
-                    </div>
-                  </div>
-                  <p className="text-xs text-muted-foreground italic flex items-center gap-1">
-                    <Sparkles className="w-3 h-3" />
-                    AI grounded to this contract + playbook + past deals + benchmarks
-                  </p>
-                </div>
-              </Card>
             </TabsContent>
 
             <TabsContent value="chat" className="space-y-6">
-              {/* Contract Context Panel */}
-              <Card className="bg-accent/50 border-border">
-                <div className="p-4">
-                  <div className="flex items-start justify-between mb-3">
-                    <div>
-                      <h3 className="text-sm font-semibold text-foreground mb-1">{contractContext.provider}</h3>
-                      <p className="text-xs text-muted-foreground flex items-center gap-1">
-                        <Calendar className="w-3 h-3" />
-                        Last modified: {contractContext.lastModified}
-                      </p>
-                    </div>
-                    <Badge variant={contractContext.riskLevel === "high" ? "destructive" : "secondary"}>
-                      {contractContext.riskLevel.toUpperCase()} RISK
-                    </Badge>
-                  </div>
-                  <div className="grid grid-cols-2 gap-3 mb-3">
-                    <div className="flex items-center gap-2">
-                      <AlertCircle className="w-4 h-4 text-destructive" />
-                      <span className="text-xs text-foreground"><span className="font-semibold">{contractContext.openRisks}</span> open risks</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <TrendingUp className="w-4 h-4 text-green-600" />
-                      <span className="text-xs text-foreground">Potential savings: <span className="font-semibold">{contractContext.potentialSavings}</span></span>
-                    </div>
-                  </div>
-                  <p className="text-xs text-muted-foreground italic flex items-center gap-1">
-                    <Sparkles className="w-3 h-3" />
-                    AI grounded to this contract + playbook + past deals + benchmarks
-                  </p>
-                </div>
-              </Card>
-
               {/* Enhanced Chat Interface */}
               <Card className="border-border">
                 <div className="h-[500px] flex flex-col">
