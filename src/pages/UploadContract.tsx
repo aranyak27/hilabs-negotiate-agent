@@ -16,6 +16,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Upload, FileText, Loader2, AlertTriangle, CheckCircle, TrendingUp, Calculator, MessageSquare, FileDown, Info, Filter, CheckCheck, Clock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
+import React from "react";
 import { useToast } from "@/hooks/use-toast";
 
 const clauses = [
@@ -73,17 +74,88 @@ const UploadContract = () => {
   const [resolvedAlerts, setResolvedAlerts] = useState<number[]>([]);
   const [pastInstancesModal, setPastInstancesModal] = useState<{ open: boolean; clauseTitle: string; alertIndex: number }>({ open: false, clauseTitle: "", alertIndex: -1 });
   const [statusFilter, setStatusFilter] = useState("all");
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
-  const handleUpload = () => {
+  const acceptedFileTypes = [
+    'application/pdf',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'image/png',
+    'image/jpeg',
+    'image/tiff'
+  ];
+
+  const acceptedExtensions = '.pdf,.doc,.docx,.png,.jpg,.jpeg,.tiff';
+
+  const validateFile = (file: File) => {
+    if (!acceptedFileTypes.includes(file.type) && 
+        !acceptedExtensions.split(',').some(ext => file.name.toLowerCase().endsWith(ext.trim()))) {
+      toast({
+        title: "Unsupported file type",
+        description: "Please upload PDF or Word format",
+        variant: "destructive"
+      });
+      return false;
+    }
+    return true;
+  };
+
+  const processFile = async (file: File) => {
+    if (!validateFile(file)) return;
+
+    setSelectedFile(file);
     setIsProcessing(true);
-    setTimeout(() => {
+
+    try {
+      // Simulate file processing and clause extraction
+      // In production, this would be an API call to backend
+      await new Promise((resolve) => setTimeout(resolve, 3000));
+      
       setIsProcessing(false);
       setShowResults(true);
+      
       toast({
         title: "Contract processed successfully",
         description: "42 clauses extracted • 2 compliance issues detected",
       });
-    }, 3000);
+
+      // Scroll to top of results
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch (error) {
+      setIsProcessing(false);
+      toast({
+        title: "Upload failed",
+        description: "Upload failed — try again or contact support",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      processFile(file);
+    }
+  };
+
+  const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    
+    const file = event.dataTransfer.files?.[0];
+    if (file) {
+      processFile(file);
+    }
+  };
+
+  const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+  };
+
+  const handleUploadClick = () => {
+    fileInputRef.current?.click();
   };
 
   const handleAcceptCompliant = () => {
@@ -179,7 +251,19 @@ const UploadContract = () => {
               </p>
             </div>
 
-            <Card className="p-12 border-2 border-dashed border-border hover:border-primary transition-colors">
+            <Card 
+              className="p-12 border-2 border-dashed border-border hover:border-primary transition-colors cursor-pointer"
+              onDrop={handleDrop}
+              onDragOver={handleDragOver}
+              onClick={handleUploadClick}
+            >
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept={acceptedExtensions}
+                onChange={handleFileSelect}
+                className="hidden"
+              />
               {!isProcessing ? (
                 <div className="text-center space-y-6">
                   <div className="flex justify-center">
@@ -195,10 +279,10 @@ const UploadContract = () => {
                       or click to browse files
                     </p>
                     <p className="text-sm text-muted-foreground">
-                      Supports PDF, DOC, DOCX, and scanned images
+                      Supports PDF, DOC, DOCX, PNG, JPG, and TIFF
                     </p>
                   </div>
-                  <Button onClick={handleUpload} size="lg" className="gap-2">
+                  <Button onClick={(e) => { e.stopPropagation(); handleUploadClick(); }} size="lg" className="gap-2">
                     <FileText className="w-5 h-5" />
                     Select File
                   </Button>
@@ -210,7 +294,7 @@ const UploadContract = () => {
                   </div>
                   <div>
                     <h3 className="text-xl font-semibold text-foreground mb-2">
-                      Processing Contract
+                      Analyzing contract… please wait
                     </h3>
                     <p className="text-muted-foreground mb-4">
                       Extracting clauses with NLP Intelligence...
@@ -218,9 +302,11 @@ const UploadContract = () => {
                     <div className="max-w-md mx-auto bg-secondary rounded-full h-2 overflow-hidden">
                       <div className="bg-primary h-full w-2/3 animate-pulse"></div>
                     </div>
-                    <p className="text-sm text-muted-foreground mt-4">
-                      Apollo Hospitals - Master Service Agreement.pdf
-                    </p>
+                    {selectedFile && (
+                      <p className="text-sm text-muted-foreground mt-4">
+                        {selectedFile.name}
+                      </p>
+                    )}
                   </div>
                 </div>
               )}
@@ -241,8 +327,8 @@ const UploadContract = () => {
               </Card>
               <Card className="p-4 border-border">
                 <div className="text-center">
-                  <p className="text-2xl font-bold text-primary">18s</p>
-                  <p className="text-sm text-muted-foreground">Avg Processing Time</p>
+                  <p className="text-2xl font-bold text-primary">18 days</p>
+                  <p className="text-sm text-muted-foreground">Avg Cycle Time</p>
                 </div>
               </Card>
             </div>
