@@ -4,9 +4,6 @@ import { Link, useLocation } from "react-router-dom";
 const pathNames: Record<string, string> = {
   "/": "Dashboard",
   "/upload": "Contract Analysis",
-  "/redlining": "Redlining",
-  "/approvals": "Approvals",
-  "/summary": "Summary",
 };
 
 const Breadcrumbs = () => {
