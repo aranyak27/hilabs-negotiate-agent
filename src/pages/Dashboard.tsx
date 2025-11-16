@@ -72,19 +72,26 @@ const Dashboard = () => {
           </div>
 
           {/* Next Action Banner */}
-          <NextActionBanner
-            title="Next Best Action"
-            description="3 contracts require immediate attention"
-            action="Review High Priority"
-            onAction={() => {
-              navigate("/upload");
-              setTimeout(() => {
-                const firstAlert = document.querySelector('[data-alert="high"]');
-                firstAlert?.scrollIntoView({ behavior: "smooth", block: "center" });
-              }, 100);
-            }}
-            variant="urgent"
-          />
+          <div className="flex gap-4">
+            <div className="flex-1">
+              <NextActionBanner
+                title="Next Best Action"
+                description="3 contracts require immediate attention"
+                action="Review High Priority"
+                onAction={() => {
+                  navigate("/upload");
+                  setTimeout(() => {
+                    const firstHighRisk = document.querySelector('[data-risk="high"]');
+                    firstHighRisk?.scrollIntoView({ behavior: "smooth", block: "center" });
+                  }, 100);
+                }}
+                variant="urgent"
+              />
+            </div>
+            <Button onClick={() => navigate("/repository")} variant="outline" className="gap-2 h-auto">
+              View All Contracts
+            </Button>
+          </div>
 
           {/* Metrics Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -153,7 +160,12 @@ const Dashboard = () => {
                 </div>
                 <div className="space-y-3">
                   {contracts.map((contract, idx) => (
-                    <div key={idx} className="p-4 border border-border rounded-lg hover:bg-accent transition-all animate-fade-in" style={{ animationDelay: `${idx * 100}ms` }}>
+                    <div 
+                      key={idx} 
+                      className="p-4 border border-border rounded-lg hover:bg-accent transition-all animate-fade-in" 
+                      style={{ animationDelay: `${idx * 100}ms` }}
+                      data-risk={contract.riskLevel}
+                    >
                       <div className="flex items-start justify-between gap-4 mb-3">
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-1">
@@ -181,46 +193,22 @@ const Dashboard = () => {
                         </div>
                       </div>
                       
-                      <div className="flex items-center justify-between pt-3 border-t border-border">
-                        <div className="flex items-center gap-2">
-                          <AlertTriangle className="w-4 h-4 text-amber-600" />
-                          <div>
-                            <p className="text-xs font-medium text-foreground">Next: {contract.nextAction}</p>
-                            <p className="text-xs text-muted-foreground">{contract.actionOwner}</p>
-                          </div>
-                        </div>
+                      <div className="flex items-center justify-between pt-3 border-t border-border gap-3">
+                        <Button 
+                          size="sm" 
+                          onClick={() => navigate("/upload")}
+                          className="flex-1"
+                        >
+                          {contract.nextAction}
+                        </Button>
                         <div className="flex items-center gap-1">
-                          <Button 
-                            size="sm" 
-                            variant="ghost" 
-                            onClick={() => handleQuickAction("View", contract.name)}
-                            className="h-8 w-8 p-0"
-                          >
-                            <Eye className="w-4 h-4" />
-                          </Button>
                           <Button 
                             size="sm" 
                             variant="ghost"
                             onClick={() => navigate("/upload")}
-                            className="h-8 w-8 p-0"
+                            className="h-8 px-3"
                           >
-                            <Play className="w-4 h-4" />
-                          </Button>
-                          <Button 
-                            size="sm" 
-                            variant="ghost"
-                            onClick={() => handleQuickAction("Ask Co-Pilot", contract.name)}
-                            className="h-8 w-8 p-0"
-                          >
-                            <MessageSquare className="w-4 h-4" />
-                          </Button>
-                          <Button 
-                            size="sm" 
-                            variant="ghost"
-                            onClick={() => handleQuickAction("Share", contract.name)}
-                            className="h-8 w-8 p-0"
-                          >
-                            <Share2 className="w-4 h-4" />
+                            Open Workflow
                           </Button>
                         </div>
                       </div>
@@ -232,7 +220,29 @@ const Dashboard = () => {
 
             {/* Activity Feed - 1/3 width */}
             <div>
-              <ActivityFeed />
+              <Card className="p-6 border-border">
+                <h2 className="text-xl font-bold text-foreground mb-4">Recent Activity</h2>
+                <div className="space-y-3">
+                  {[
+                    { user: "Raj Malhotra", action: "approved contract", contract: "Apollo Hospitals", time: "2 hours ago", clickable: true },
+                    { user: "Priya Sharma", action: "requested clarification", contract: "Max Healthcare", time: "5 hours ago", clickable: true },
+                    { user: "Sarah Chen", action: "applied fallback clause", contract: "Fortis Memorial", time: "1 day ago", clickable: true },
+                  ].map((activity, idx) => (
+                    <div 
+                      key={idx} 
+                      className="p-3 border border-border rounded-lg hover:bg-accent cursor-pointer transition-all animate-fade-in" 
+                      style={{ animationDelay: `${idx * 100}ms` }}
+                      onClick={() => navigate("/upload")}
+                    >
+                      <p className="text-sm text-foreground mb-1">
+                        <span className="font-semibold">{activity.user}</span> {activity.action}
+                      </p>
+                      <p className="text-xs text-muted-foreground mb-1">{activity.contract}</p>
+                      <p className="text-xs text-muted-foreground">{activity.time}</p>
+                    </div>
+                  ))}
+                </div>
+              </Card>
             </div>
           </div>
 

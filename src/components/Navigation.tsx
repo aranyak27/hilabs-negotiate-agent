@@ -1,6 +1,7 @@
 import { Home, Upload, FileText, Shield, TrendingUp, Calculator, MessageSquare, FileEdit, CheckSquare, FileDown } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const navItems = [
   { path: "/", icon: Home, label: "Dashboard" },
@@ -26,26 +27,34 @@ const Navigation = () => {
           </Link>
           
           <div className="flex gap-1">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = location.pathname === item.path;
-              
-              return (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  className={cn(
-                    "flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors",
-                    isActive
-                      ? "bg-primary text-primary-foreground"
-                      : "text-muted-foreground hover:text-foreground hover:bg-accent"
-                  )}
-                >
-                  <Icon className="w-4 h-4" />
-                  <span className="hidden lg:inline">{item.label}</span>
-                </Link>
-              );
-            })}
+            <TooltipProvider>
+              {navItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = location.pathname === item.path;
+                
+                return (
+                  <Tooltip key={item.path}>
+                    <TooltipTrigger asChild>
+                      <Link
+                        to={item.path}
+                        className={cn(
+                          "flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors",
+                          isActive
+                            ? "bg-primary text-primary-foreground"
+                            : "text-muted-foreground hover:text-foreground hover:bg-accent"
+                        )}
+                      >
+                        <Icon className="w-4 h-4" />
+                        <span className="hidden lg:inline">{item.label}</span>
+                      </Link>
+                    </TooltipTrigger>
+                    <TooltipContent className="lg:hidden">
+                      <p>{item.label}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                );
+              })}
+            </TooltipProvider>
           </div>
         </div>
       </div>

@@ -4,13 +4,16 @@ import WorkflowProgress from "@/components/WorkflowProgress";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { FileDown, Mail, CheckCircle, TrendingDown, Clock, Database, Share2 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { FileDown, Mail, CheckCircle, TrendingDown, Clock, Database, Share2, FileText } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { useState } from "react";
 
 const Summary = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [completedSteps, setCompletedSteps] = useState<number[]>([]);
 
   const handleExport = (type: string) => {
     toast({
@@ -54,9 +57,13 @@ const Summary = () => {
               </div>
             </div>
             <h1 className="text-3xl font-bold text-foreground">Negotiation Complete</h1>
-            <p className="text-muted-foreground">
+            <p className="text-muted-foreground mb-2">
               Apollo Hospitals - Master Service Agreement (Final)
             </p>
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 border border-blue-200 rounded-lg">
+              <Clock className="w-5 h-5 text-blue-600" />
+              <span className="text-lg font-bold text-blue-900">38% faster cycle time</span>
+            </div>
           </div>
 
           {/* Before vs After Comparison */}
@@ -287,25 +294,55 @@ const Summary = () => {
 
           {/* Onboarding Checklist */}
           <Card className="p-6 border-border">
-            <h3 className="text-lg font-semibold text-foreground mb-4">Next Steps & Onboarding</h3>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-foreground">Next Steps & Onboarding</h3>
+              <span className="text-sm text-muted-foreground">
+                {completedSteps.length} of 5 completed ({Math.round((completedSteps.length / 5) * 100)}%)
+              </span>
+            </div>
             <div className="space-y-2 text-sm">
               {[
-                { task: "Provider to countersign final agreement", duration: "5 business days", status: "pending" },
-                { task: "Contract admin to update system records", duration: "1 day", status: "pending" },
-                { task: "Provider relations to schedule onboarding call", duration: "2 days", status: "pending" },
-                { task: "Claims team to configure new rates", duration: "3 days", status: "pending" },
-                { task: "Quality team to set up performance tracking", duration: "2 days", status: "pending" },
-              ].map((item, idx) => (
-                <div key={idx} className="flex items-center justify-between p-3 border border-border rounded-md hover:bg-muted/30 transition-colors">
+                { id: 1, task: "Provider to countersign final agreement", duration: "5 business days" },
+                { id: 2, task: "Contract admin to update system records", duration: "1 day" },
+                { id: 3, task: "Provider relations to schedule onboarding call", duration: "2 days" },
+                { id: 4, task: "Claims team to configure new rates", duration: "3 days" },
+                { id: 5, task: "Quality team to set up performance tracking", duration: "2 days" },
+              ].map((item) => (
+                <div key={item.id} className="flex items-center justify-between p-3 border border-border rounded-md hover:bg-muted/30 transition-colors">
                   <div className="flex items-center gap-3">
-                    <input type="checkbox" className="w-4 h-4" />
-                    <span className="text-foreground">{item.task}</span>
+                    <Checkbox 
+                      id={`onboard-${item.id}`}
+                      checked={completedSteps.includes(item.id)}
+                      onCheckedChange={(checked) => {
+                        if (checked) {
+                          setCompletedSteps([...completedSteps, item.id]);
+                          toast({
+                            title: "Task completed",
+                            description: item.task,
+                          });
+                        } else {
+                          setCompletedSteps(completedSteps.filter(id => id !== item.id));
+                        }
+                      }}
+                    />
+                    <label 
+                      htmlFor={`onboard-${item.id}`}
+                      className={`cursor-pointer ${completedSteps.includes(item.id) ? 'line-through text-muted-foreground' : 'text-foreground'}`}
+                    >
+                      {item.task}
+                    </label>
                   </div>
                   <div className="flex items-center gap-3">
                     <span className="text-xs text-muted-foreground">{item.duration}</span>
-                    <Badge variant="outline" className="bg-yellow-100 text-yellow-700 border-yellow-200 text-xs">
-                      {item.status}
-                    </Badge>
+                    {completedSteps.includes(item.id) ? (
+                      <Badge variant="outline" className="bg-green-100 text-green-700 border-green-200 text-xs">
+                        completed
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline" className="bg-yellow-100 text-yellow-700 border-yellow-200 text-xs">
+                        pending
+                      </Badge>
+                    )}
                   </div>
                 </div>
               ))}
@@ -317,9 +354,28 @@ const Summary = () => {
               <FileDown className="w-5 h-5" />
               Export Negotiation Packet (PDF)
             </Button>
-            <Button size="lg" variant="outline" className="gap-2" onClick={() => handleExport("Email")}>
-              <Mail className="w-5 h-5" />
-              Email to Stakeholders
+            <Button 
+              size="lg" 
+              variant="outline" 
+              className="gap-2"
+              onClick={() => {
+                toast({
+                  title: "Viewing Audit Log",
+                  description: "Complete activity history for this negotiation",
+                });
+              }}
+            >
+              <FileText className="w-5 h-5" />
+              View Complete Audit Log
+            </Button>
+            <Button 
+              size="lg" 
+              variant="outline" 
+              className="gap-2" 
+              onClick={() => navigate("/repository")}
+            >
+              <Database className="w-5 h-5" />
+              View in Repository
             </Button>
           </div>
 
