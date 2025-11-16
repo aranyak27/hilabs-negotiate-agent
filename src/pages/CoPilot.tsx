@@ -948,76 +948,8 @@ HiLabs Contract Negotiation Team`;
 
           {/* General Insights Mode - Show Chat Interface */}
           {insightMode === "general" && (
-            <Tabs value={mode} onValueChange={(v) => setMode(v as "quick" | "chat")} className="w-full">
-              <TabsList className="grid w-full grid-cols-2 mb-6">
-                <TabsTrigger value="quick" className="gap-2">
-                  <Sparkles className="w-4 h-4" />
-                  Quick Outputs
-                </TabsTrigger>
-                <TabsTrigger value="chat" className="gap-2">
-                  <MessageSquare className="w-4 h-4" />
-                  Full Co-Pilot Chat
-                </TabsTrigger>
-              </TabsList>
+            <div className="w-full space-y-6">
 
-            <TabsContent value="quick" className="space-y-6">
-              {/* Quick Action Buttons */}
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-                <Button 
-                  variant="outline" 
-                  className="flex-col h-auto py-4 gap-2 hover:bg-accent hover:border-primary transition-all"
-                  onClick={() => handleQuickAction("email")}
-                >
-                  <Mail className="w-5 h-5 text-primary" />
-                  <span className="text-xs text-center font-medium">Email</span>
-                </Button>
-                <Button 
-                  variant="outline" 
-                  className="flex-col h-auto py-4 gap-2 hover:bg-accent hover:border-primary transition-all"
-                  onClick={() => handleQuickAction("talking-points")}
-                >
-                  <MessageCircle className="w-5 h-5 text-primary" />
-                  <span className="text-xs text-center font-medium">Talking Points</span>
-                </Button>
-                <Button 
-                  variant="outline" 
-                  className="flex-col h-auto py-4 gap-2 hover:bg-accent hover:border-primary transition-all"
-                  onClick={() => handleQuickAction("summary")}
-                >
-                  <FileText className="w-5 h-5 text-primary" />
-                  <span className="text-xs text-center font-medium">Exec Summary</span>
-                </Button>
-                <Button 
-                  variant="outline" 
-                  className="flex-col h-auto py-4 gap-2 hover:bg-accent hover:border-primary transition-all"
-                  onClick={() => handleQuickAction("justification")}
-                >
-                  <TrendingDown className="w-5 h-5 text-primary" />
-                  <span className="text-xs text-center font-medium">CFO Justification</span>
-                </Button>
-                <Button 
-                  variant="outline" 
-                  className="flex-col h-auto py-4 gap-2 hover:bg-accent hover:border-primary transition-all"
-                  onClick={() => handleQuickAction("comparison")}
-                >
-                  <BarChart className="w-5 h-5 text-primary" />
-                  <span className="text-xs text-center font-medium">Price Benchmarks</span>
-                </Button>
-                <Button 
-                  variant="outline" 
-                  className="flex-col h-auto py-4 gap-2 hover:bg-accent hover:border-primary transition-all"
-                  onClick={() => {
-                    handleQuickAction("email");
-                    // In a real app, this would generate a counter-proposal
-                  }}
-                >
-                  <FileText className="w-5 h-5 text-primary" />
-                  <span className="text-xs text-center font-medium">Counter-Proposal</span>
-                </Button>
-              </div>
-            </TabsContent>
-
-            <TabsContent value="chat" className="space-y-6">
               {/* Enhanced Chat Interface */}
               <Card className="border-border">
                 <div className="h-[500px] flex flex-col">
@@ -1025,87 +957,40 @@ HiLabs Contract Negotiation Team`;
                   <div className="flex-1 overflow-y-auto p-6 space-y-6">
                     {messages.map((msg, idx) => (
                       <div key={idx} className="space-y-3">
-                        <div className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-                          <div
-                            className={`max-w-[75%] rounded-lg p-4 ${
-                              msg.role === "user"
-                                ? "bg-primary text-primary-foreground ml-auto"
-                                : "bg-muted text-foreground border border-border"
-                            }`}
-                          >
-                            {msg.role === "assistant" && (
-                              <div className="flex items-center gap-2 mb-3 pb-2 border-b border-border">
-                                <MessageSquare className="w-4 h-4 text-primary" />
-                                <span className="text-xs font-semibold text-primary">Co-Pilot</span>
-                              </div>
-                            )}
-                            <div 
-                              className={`text-sm ${msg.role === "assistant" ? "prose prose-sm max-w-none" : ""}`}
-                              dangerouslySetInnerHTML={{ 
-                                __html: msg.role === "assistant" 
-                                  ? msg.content
-                                      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                                      .replace(/^## (.*$)/gm, '<h2 class="text-base font-bold mb-2 mt-3 text-foreground">$1</h2>')
-                                      .replace(/^### (.*$)/gm, '<h3 class="text-sm font-semibold mb-2 mt-2 text-foreground">$1</h3>')
-                                      .replace(/^• (.*$)/gm, '<li class="ml-4">$1</li>')
-                                      .replace(/\n/g, '<br>')
-                                  : msg.content.replace(/\n/g, '<br>')
-                              }}
-                            />
-                            
-                            {msg.role === "assistant" && msg.sources && msg.sources.length > 0 && (
-                              <div className="mt-4 pt-3 border-t border-border">
-                                <p className="text-xs text-muted-foreground mb-1">Sources referenced:</p>
-                                <div className="flex flex-wrap gap-1">
-                                  {msg.sources.map((source, idx) => (
-                                    <Badge key={idx} variant="secondary" className="text-xs">
-                                      {source}
-                                    </Badge>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-
-                            {msg.role === "assistant" && msg.actions && msg.actions.length > 0 && (
-                              <div className="mt-4 pt-3 border-t border-border space-y-2">
-                                <p className="text-xs text-muted-foreground mb-2">Recommended next steps:</p>
-                                <div className="flex flex-wrap gap-2">
-                                  {msg.actions.map((action, idx) => (
-                                    <Button
-                                      key={idx}
-                                      size="sm"
-                                      variant="outline"
-                                      onClick={action.onClick}
-                                      className="text-xs h-8"
-                                    >
-                                      {action.label}
-                                    </Button>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
+                        {msg.role === "user" ? (
+                          <div className="flex justify-end">
+                            <div className="bg-primary text-primary-foreground rounded-lg px-4 py-3 max-w-[80%]">
+                              <p className="text-sm">{msg.content}</p>
+                            </div>
                           </div>
-                        </div>
-
-                        {/* Follow-up suggestions after AI messages */}
-                        {msg.role === "assistant" && idx === messages.length - 1 && followUpSuggestions.length > 0 && (
-                          <div className="flex justify-start">
-                            <div className="max-w-[75%] space-y-2">
-                              <p className="text-xs text-muted-foreground px-2">Continue with:</p>
+                        ) : (
+                          <div className="space-y-3">
+                            <div className="bg-accent/50 rounded-lg px-4 py-3">
+                              <p className="text-sm text-foreground">{msg.content}</p>
+                            </div>
+                            {msg.sources && (
                               <div className="flex flex-wrap gap-2">
-                                {followUpSuggestions.slice(0, 3).map((suggestion, sidx) => (
+                                {msg.sources.map((source, i) => (
+                                  <Badge key={i} variant="secondary" className="text-xs">
+                                    {source}
+                                  </Badge>
+                                ))}
+                              </div>
+                            )}
+                            {msg.actions && msg.actions.length > 0 && (
+                              <div className="flex flex-wrap gap-2">
+                                {msg.actions.map((action, i) => (
                                   <Button
-                                    key={sidx}
-                                    size="sm"
+                                    key={i}
                                     variant="ghost"
-                                    onClick={() => handleSend(suggestion)}
+                                    onClick={action.onClick}
                                     className="text-xs h-auto py-2 px-3 border border-border hover:bg-accent hover:border-primary"
                                   >
-                                    {suggestion}
+                                    {action.label}
                                   </Button>
                                 ))}
                               </div>
-                            </div>
+                            )}
                           </div>
                         )}
                       </div>
@@ -1147,8 +1032,7 @@ HiLabs Contract Negotiation Team`;
                   </div>
                 </div>
               </Card>
-            </TabsContent>
-          </Tabs>
+            </div>
           )}
       </main>
 
