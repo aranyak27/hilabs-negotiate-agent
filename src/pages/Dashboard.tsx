@@ -79,11 +79,8 @@ const Dashboard = () => {
                 description="3 contracts require immediate attention"
                 action="Review High Priority"
                 onAction={() => {
-                  navigate("/upload");
-                  setTimeout(() => {
-                    const firstHighRisk = document.querySelector('[data-risk="high"]');
-                    firstHighRisk?.scrollIntoView({ behavior: "smooth", block: "center" });
-                  }, 100);
+                  const firstHighRisk = document.querySelector('[data-risk="high"]');
+                  firstHighRisk?.scrollIntoView({ behavior: "smooth", block: "center" });
                 }}
                 variant="urgent"
               />
