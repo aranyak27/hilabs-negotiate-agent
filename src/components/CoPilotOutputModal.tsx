@@ -8,7 +8,7 @@ interface CoPilotOutputModalProps {
   onOpenChange: (open: boolean) => void;
   title: string;
   content: string;
-  type: "email" | "talking-points" | "summary" | "justification" | "comparison";
+  type: "email" | "talking-points" | "summary" | "justification" | "comparison" | "counter-proposal";
 }
 
 const CoPilotOutputModal = ({ open, onOpenChange, title, content, type }: CoPilotOutputModalProps) => {
