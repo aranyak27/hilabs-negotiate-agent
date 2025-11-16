@@ -1,5 +1,4 @@
 import Navigation from "@/components/Navigation";
-import Breadcrumbs from "@/components/Breadcrumbs";
 import NextActionBanner from "@/components/NextActionBanner";
 import FinancialWidget from "@/components/FinancialWidget";
 import ActivityFeed from "@/components/ActivityFeed";
@@ -155,8 +154,6 @@ const Dashboard = () => {
       
       <main className="max-w-7xl mx-auto px-6 py-8">
         <div className="space-y-6">
-          <Breadcrumbs />
-
           {/* Header */}
           <div>
             <h1 className="text-3xl font-bold text-foreground mb-2 animate-fade-in">
