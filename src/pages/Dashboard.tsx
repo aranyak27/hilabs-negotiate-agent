@@ -76,13 +76,13 @@ const Dashboard = () => {
   const getContractRoute = (contract: typeof contracts[0]) => {
     // Determine where to route based on stage and unresolved items
     if (contract.hasUnresolvedHighSeverity) {
-      return { path: "/upload", section: "alerts-section" };
+      return { path: "/upload", section: "alerts-section", label: "Compliance" };
     } else if (contract.hasUnresolvedRedlining) {
-      return { path: "/redlining", section: null };
+      return { path: "/redlining", section: null, label: "Redlining" };
     } else if (contract.hasPendingApprovals) {
-      return { path: "/approvals", section: null };
+      return { path: "/approvals", section: null, label: "Approvals" };
     } else {
-      return { path: "/summary", section: null };
+      return { path: "/summary", section: null, label: "Summary" };
     }
   };
 
@@ -99,22 +99,25 @@ const Dashboard = () => {
   };
 
   const handleReviewHighPriority = () => {
-    // Find the highest priority contract (first in sorted list)
-    const highestPriority = sortedContracts[0];
-    const route = getContractRoute(highestPriority);
-    
-    navigate(route.path);
-    
-    if (route.section) {
-      setTimeout(() => {
-        const section = document.getElementById(route.section);
-        section?.scrollIntoView({ behavior: "smooth", block: "start" });
-      }, 100);
+    // Check if there are any high-priority contracts
+    const highPriorityContracts = sortedContracts.filter(
+      c => c.riskLevel === "high" || c.riskLevel === "medium" || c.days >= 7
+    );
+
+    if (highPriorityContracts.length === 0) {
+      toast({
+        title: "All high-priority contracts are under control 🎉",
+        description: "No urgent items require your attention right now",
+      });
+      return;
     }
 
-    toast({
-      title: "High-Priority Contract",
-      description: "⚠️ You are viewing a high-priority contract — resolving this first prevents contract leakage.",
+    // Route to repository with filters applied
+    navigate("/repository", { 
+      state: { 
+        filterRisk: ["high", "medium"],
+        filterStatus: "in_progress"
+      } 
     });
   };
 
@@ -128,6 +131,11 @@ const Dashboard = () => {
         section?.scrollIntoView({ behavior: "smooth", block: "start" });
       }, 100);
     }
+  };
+
+  const handleContractCardClick = (contract: typeof contracts[0]) => {
+    const route = getContractRoute(contract);
+    navigate(route.path, { state: { viewOnly: true, contractId: contract.name } });
   };
 
   const isUserTurn = (contract: typeof contracts[0]) => {
@@ -241,17 +249,23 @@ const Dashboard = () => {
                   </Badge>
                 </div>
                 <div className="space-y-3">
-                  {sortedContracts.map((contract, idx) => (
+                  {sortedContracts.map((contract, idx) => {
+                    const route = getContractRoute(contract);
+                    return (
                     <div 
                       key={idx} 
                       className="p-4 border border-border rounded-lg hover:bg-accent transition-all animate-fade-in" 
                       style={{ animationDelay: `${idx * 100}ms` }}
                       data-risk={contract.riskLevel}
                     >
-                      <div className="flex items-start justify-between gap-4 mb-3">
+                      <div 
+                        className="flex items-start justify-between gap-4 mb-3 cursor-pointer"
+                        onClick={() => handleContractCardClick(contract)}
+                        title={`Go to latest step → ${route.label}`}
+                      >
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-1">
-                            <p className="font-medium text-foreground">{contract.name}</p>
+                            <p className="font-medium text-foreground hover:text-primary transition-colors">{contract.name}</p>
                             <Badge variant="outline" className={
                               contract.riskLevel === "high" ? "bg-red-100 text-red-700 border-red-200" :
                               contract.riskLevel === "medium" ? "bg-yellow-100 text-yellow-700 border-yellow-200" :
@@ -281,55 +295,29 @@ const Dashboard = () => {
                       </div>
                       
                       <div className="flex items-center justify-between pt-3 border-t border-border gap-3">
-                        <Button 
-                          size="sm" 
-                          onClick={() => {
-                            const route = getContractRoute(contract);
-                            navigate(route.path);
-                            if (route.section) {
-                              setTimeout(() => {
-                                const section = document.getElementById(route.section);
-                                section?.scrollIntoView({ behavior: "smooth", block: "start" });
-                              }, 100);
-                            }
-                          }}
-                          className="flex-1"
-                        >
-                          {getActionText(contract)}
-                        </Button>
                         <TooltipProvider>
                           <Tooltip>
                             <TooltipTrigger asChild>
-                              <div>
-                                {isUserTurn(contract) ? (
-                                  <Button 
-                                    size="sm" 
-                                    variant="outline"
-                                    onClick={() => handleContinueContract(contract)}
-                                    className="h-8 px-3"
-                                  >
-                                    Continue Contract
-                                  </Button>
-                                ) : (
-                                  <Button 
-                                    size="sm" 
-                                    variant="outline"
-                                    disabled
-                                    className="h-8 px-3"
-                                  >
-                                    Waiting on {contract.assignedTo}
-                                  </Button>
-                                )}
-                              </div>
+                              <Button 
+                                size="sm" 
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleContinueContract(contract);
+                                }}
+                                className="flex-1"
+                              >
+                                {getActionText(contract)}
+                              </Button>
                             </TooltipTrigger>
                             <TooltipContent>
-                              <p>{isUserTurn(contract) ? "Resume the contract from where you left off" : "You'll be notified when your action is required"}</p>
+                              <p>Go to latest step → {route.label}</p>
                             </TooltipContent>
                           </Tooltip>
                         </TooltipProvider>
                       </div>
                     </div>
-                  ))}
+                  );
+                  })}
                 </div>
               </Card>
             </div>
