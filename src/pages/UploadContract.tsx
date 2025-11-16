@@ -3,6 +3,7 @@ import Breadcrumbs from "@/components/Breadcrumbs";
 import WorkflowProgress from "@/components/WorkflowProgress";
 import NextActionBanner from "@/components/NextActionBanner";
 import FinancialWidget from "@/components/FinancialWidget";
+import PastInstancesModal from "@/components/PastInstancesModal";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -69,6 +70,8 @@ const UploadContract = () => {
   const [escalation, setEscalation] = useState(8);
   const [incentive, setIncentive] = useState(10);
   const [riskFilter, setRiskFilter] = useState("all");
+  const [resolvedAlerts, setResolvedAlerts] = useState<number[]>([]);
+  const [pastInstancesModal, setPastInstancesModal] = useState<{ open: boolean; clauseTitle: string; alertIndex: number }>({ open: false, clauseTitle: "", alertIndex: -1 });
   const [statusFilter, setStatusFilter] = useState("all");
 
   const handleUpload = () => {
@@ -89,6 +92,44 @@ const UploadContract = () => {
       description: "5 clauses marked as approved",
     });
   };
+
+  const handleApplyFallback = (alertIndex: number, alertTitle: string) => {
+    setResolvedAlerts([...resolvedAlerts, alertIndex]);
+    toast({
+      title: "Fallback applied",
+      description: `${alertTitle} - Ready for Legal review`,
+      action: (
+        <Button size="sm" onClick={() => navigate("/approvals")}>
+          Notify Legal
+        </Button>
+      ),
+    });
+  };
+
+  const handleViewPastInstances = (clauseTitle: string, alertIndex: number) => {
+    setPastInstancesModal({ open: true, clauseTitle, alertIndex });
+  };
+
+  const pastInstances = [
+    {
+      contract: "Apollo Hospitals Chennai - 2024",
+      date: "Q2 2024",
+      outcome: "accepted" as const,
+      notes: "Accepted 90-day termination with 6-month transition period. No issues during contract term."
+    },
+    {
+      contract: "Max Healthcare Delhi - 2024",
+      date: "Q1 2024",
+      outcome: "accepted" as const,
+      notes: "Implemented standard clause. Provider initially resisted but accepted after showing market benchmarks."
+    },
+    {
+      contract: "Fortis Mumbai - 2023",
+      date: "Q4 2023",
+      outcome: "risky" as const,
+      notes: "Accepted 60-day notice. Led to operational challenges during transition period. Not recommended."
+    },
+  ];
 
   const filteredClauses = clauses.filter(clause => {
     const matchesRisk = riskFilter === "all" || clause.risk === riskFilter;
@@ -411,69 +452,99 @@ const UploadContract = () => {
               </Badge>
             </div>
             <div className="space-y-4">
-              {alerts.map((alert, idx) => (
-                <Card key={idx} className="p-6 border-l-4 animate-fade-in" style={{ 
-                  borderLeftColor: alert.severity === "high" ? "rgb(220, 38, 38)" : "rgb(234, 179, 8)",
-                  animationDelay: `${idx * 100}ms`
-                }}>
-                  <div className="flex gap-4">
-                    <div className="flex-shrink-0">
-                      {alert.severity === "high" ? (
-                        <AlertTriangle className="w-6 h-6 text-red-600" />
-                      ) : (
-                        <AlertTriangle className="w-6 h-6 text-yellow-600" />
-                      )}
-                    </div>
-                    <div className="flex-1 space-y-3">
-                      <div>
-                        <div className="flex items-center gap-3 mb-2">
-                          <h3 className="text-lg font-semibold text-foreground">{alert.title}</h3>
-                          <div className="flex items-center gap-2">
-                            <span className={`text-xs px-2 py-1 rounded-full ${
-                              alert.severity === "high" 
-                                ? "bg-red-100 text-red-700" 
-                                : "bg-yellow-100 text-yellow-700"
-                            }`}>
-                              SEVERITY {alert.severity === "high" ? "5/5" : "3/5"}
-                            </span>
-                            <span className="text-xs px-2 py-1 rounded-full bg-red-100 text-red-700">
-                              ₹2.4 Cr impact
-                            </span>
+              {alerts.map((alert, idx) => {
+                const isResolved = resolvedAlerts.includes(idx);
+                return (
+                  <Card 
+                    key={idx} 
+                    data-alert={alert.severity}
+                    className={`p-6 border-l-4 animate-fade-in transition-all ${isResolved ? 'opacity-50' : ''}`}
+                    style={{ 
+                      borderLeftColor: isResolved ? "rgb(34, 197, 94)" : (alert.severity === "high" ? "rgb(220, 38, 38)" : "rgb(234, 179, 8)"),
+                      animationDelay: `${idx * 100}ms`
+                    }}
+                  >
+                    <div className="flex gap-4">
+                      <div className="flex-shrink-0">
+                        {isResolved ? (
+                          <CheckCircle className="w-6 h-6 text-green-600" />
+                        ) : alert.severity === "high" ? (
+                          <AlertTriangle className="w-6 h-6 text-red-600" />
+                        ) : (
+                          <AlertTriangle className="w-6 h-6 text-yellow-600" />
+                        )}
+                      </div>
+                      <div className="flex-1 space-y-3">
+                        <div>
+                          <div className="flex items-center gap-3 mb-2">
+                            <h3 className="text-lg font-semibold text-foreground">{alert.title}</h3>
+                            <div className="flex items-center gap-2">
+                              {isResolved ? (
+                                <span className="text-xs px-2 py-1 rounded-full bg-green-100 text-green-700">
+                                  ✓ RESOLVED
+                                </span>
+                              ) : (
+                                <>
+                                  <span className={`text-xs px-2 py-1 rounded-full ${
+                                    alert.severity === "high" 
+                                      ? "bg-red-100 text-red-700" 
+                                      : "bg-yellow-100 text-yellow-700"
+                                  }`}>
+                                    SEVERITY {alert.severity === "high" ? "5/5" : "3/5"}
+                                  </span>
+                                  <span className="text-xs px-2 py-1 rounded-full bg-red-100 text-red-700">
+                                    ₹2.4 Cr impact
+                                  </span>
+                                </>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                        <p className="text-muted-foreground text-sm mb-2">{alert.description}</p>
-                        
-                        {/* Side by Side Comparison */}
-                        <div className="grid grid-cols-2 gap-4 mb-3">
-                          <div className="p-3 bg-red-50 border border-red-200 rounded-md">
-                            <p className="text-xs font-semibold text-red-900 mb-1">Provider Language</p>
-                            <p className="text-sm text-red-700">{alert.description}</p>
+                          <p className="text-muted-foreground text-sm mb-2">{alert.description}</p>
+                          
+                          {/* Side by Side Comparison */}
+                          <div className="grid grid-cols-2 gap-4 mb-3">
+                            <div className="p-3 bg-red-50 border border-red-200 rounded-md">
+                              <p className="text-xs font-semibold text-red-900 mb-1">Provider Language</p>
+                              <p className="text-sm text-red-700">{alert.description}</p>
+                            </div>
+                            <div className={`p-3 border rounded-md ${isResolved ? 'bg-green-100 border-green-300' : 'bg-green-50 border-green-200'}`}>
+                              <p className="text-xs font-semibold text-green-900 mb-1">
+                                {isResolved ? 'Applied Fallback ✓' : 'Recommended Fallback'}
+                              </p>
+                              <p className="text-sm text-green-700">{alert.fallback}</p>
+                            </div>
                           </div>
-                          <div className="p-3 bg-green-50 border border-green-200 rounded-md">
-                            <p className="text-xs font-semibold text-green-900 mb-1">Recommended Fallback</p>
-                            <p className="text-sm text-green-700">{alert.fallback}</p>
+
+                          <div className="bg-amber-50 border border-amber-200 rounded-md p-3">
+                            <p className="text-sm text-amber-700">
+                              <strong>Impact:</strong> {alert.impact}
+                            </p>
                           </div>
                         </div>
 
-                        <div className="bg-amber-50 border border-amber-200 rounded-md p-3">
-                          <p className="text-sm text-amber-700">
-                            <strong>Impact:</strong> {alert.impact}
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="flex gap-2">
-                        <Button size="sm" className="bg-green-600 hover:bg-green-700">
-                          Apply Fallback Clause
-                        </Button>
-                        <Button size="sm" variant="outline">
-                          View Past Instances
-                        </Button>
+                        {!isResolved && (
+                          <div className="flex gap-2">
+                            <Button 
+                              size="sm" 
+                              className="bg-green-600 hover:bg-green-700"
+                              onClick={() => handleApplyFallback(idx, alert.title)}
+                            >
+                              Apply Fallback Clause
+                            </Button>
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => handleViewPastInstances(alert.title, idx)}
+                            >
+                              View Past Instances
+                            </Button>
+                          </div>
+                        )}
                       </div>
                     </div>
-                  </div>
-                </Card>
-              ))}
+                  </Card>
+                );
+              })}
             </div>
             <Button variant="outline" className="w-full mt-4">
               Preview Contract After Applying All Fallbacks
@@ -616,6 +687,14 @@ const UploadContract = () => {
           </div>
         </div>
       </main>
+
+      <PastInstancesModal
+        open={pastInstancesModal.open}
+        onOpenChange={(open) => setPastInstancesModal({ ...pastInstancesModal, open })}
+        clauseTitle={pastInstancesModal.clauseTitle}
+        instances={pastInstances}
+        recommendation="Based on historical data, we recommend implementing the standard 90-day termination clause with a 6-month transition period. This approach has been successfully negotiated in 85% of similar contracts and reduces operational risk during provider transitions."
+      />
     </div>
   );
 };

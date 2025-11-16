@@ -76,7 +76,13 @@ const Dashboard = () => {
             title="Next Best Action"
             description="3 contracts require immediate attention"
             action="Review High Priority"
-            onAction={() => {}}
+            onAction={() => {
+              navigate("/upload");
+              setTimeout(() => {
+                const firstAlert = document.querySelector('[data-alert="high"]');
+                firstAlert?.scrollIntoView({ behavior: "smooth", block: "center" });
+              }, 100);
+            }}
             variant="urgent"
           />
 
@@ -230,15 +236,6 @@ const Dashboard = () => {
             </div>
           </div>
 
-          {/* CTA */}
-          <div className="flex justify-center pt-4">
-            <Link to="/upload">
-              <Button size="lg" className="gap-2 hover-scale">
-                <Upload className="w-5 h-5" />
-                Upload Provider Contract
-              </Button>
-            </Link>
-          </div>
         </div>
       </main>
     </div>
