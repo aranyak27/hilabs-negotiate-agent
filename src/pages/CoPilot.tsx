@@ -5,9 +5,10 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowRight, MessageSquare, Send, Mail, MessageCircle, FileText, TrendingDown, BarChart, AlertCircle, TrendingUp, Calendar, Sparkles } from "lucide-react";
+import { ArrowRight, MessageSquare, Send, Mail, MessageCircle, FileText, TrendingDown, BarChart, AlertCircle, TrendingUp, Calendar, Sparkles, Upload } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 interface Message {
   role: "user" | "assistant";
@@ -18,6 +19,7 @@ interface Message {
 
 const CoPilot = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [mode, setMode] = useState<"quick" | "chat">("quick");
   const [insightMode, setInsightMode] = useState<"contract" | "general">("contract");
   const [messages, setMessages] = useState<Message[]>([
@@ -37,16 +39,14 @@ const CoPilot = () => {
     type: "email"
   });
 
-  // Contract context data (would come from props/context in real app)
-  // Set to null to simulate "no contract uploaded" state
-  const hasContract = false; // Toggle this to test both states
-  const contractContext = hasContract ? {
-    provider: "Apollo Hospitals",
-    lastModified: "Jan 15, 2025",
-    openRisks: 3,
-    potentialSavings: "₹12.8 Cr",
-    riskLevel: "high" as const
-  } : null;
+  // Contract context state - null when no contract uploaded
+  const [contractContext, setContractContext] = useState<{
+    provider: string;
+    lastModified: string;
+    openRisks: number;
+    potentialSavings: string;
+    riskLevel: "high" | "medium" | "low";
+  } | null>(null);
 
   const getDynamicSuggestions = () => {
     if (insightMode === "general") {
@@ -734,22 +734,62 @@ HiLabs Contract Negotiation Team`;
           {/* Contract Insights Mode */}
           {insightMode === "contract" && (
             <div className="space-y-6">
-              {/* No Contract Uploaded State */}
+              {/* No Contract Uploaded State - Inline Upload */}
               {!contractContext && (
                 <Card className="border-border">
-                  <div className="p-12 flex flex-col items-center justify-center text-center space-y-4">
-                    <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-2">
-                      <FileText className="w-8 h-8 text-primary" />
+                  <div className="p-8">
+                    <div className="flex flex-col items-center justify-center text-center space-y-4 mb-6">
+                      <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+                        <FileText className="w-8 h-8 text-primary" />
+                      </div>
+                      <div>
+                        <h3 className="text-xl font-semibold text-foreground mb-2">Upload a contract to begin</h3>
+                        <p className="text-sm text-muted-foreground max-w-md mx-auto">
+                          The Co-Pilot will extract clauses, compare benchmarks, and answer contract-specific questions.
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <h3 className="text-xl font-semibold text-foreground mb-2">Upload a contract to begin</h3>
-                      <p className="text-sm text-muted-foreground max-w-md mx-auto mb-6">
-                        The Co-Pilot will then extract clauses, compare benchmarks, and answer contract-specific questions.
-                      </p>
+
+                    {/* Upload Area */}
+                    <div className="border-2 border-dashed border-border rounded-lg p-8 hover:border-primary/50 transition-colors cursor-pointer bg-accent/20">
+                      <input
+                        type="file"
+                        id="contract-upload"
+                        className="hidden"
+                        accept=".pdf,.doc,.docx"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            toast({
+                              title: "Processing contract...",
+                              description: `Analyzing ${file.name}`,
+                            });
+                            setTimeout(() => {
+                              setContractContext({
+                                provider: "Apollo Hospitals",
+                                lastModified: new Date().toLocaleDateString(),
+                                riskLevel: "medium",
+                                openRisks: 3,
+                                potentialSavings: "₹2.4 Cr"
+                              });
+                              toast({
+                                title: "Contract analyzed successfully",
+                                description: "You can now ask questions about the contract",
+                              });
+                            }, 2000);
+                          }
+                        }}
+                      />
+                      <label htmlFor="contract-upload" className="flex flex-col items-center cursor-pointer">
+                        <Upload className="w-12 h-12 text-primary mb-3" />
+                        <p className="text-sm font-medium text-foreground mb-1">
+                          Drop your contract here or click to browse
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          Supports PDF, DOC, DOCX (max 10MB)
+                        </p>
+                      </label>
                     </div>
-                    <Button size="lg" onClick={() => navigate("/upload")}>
-                      Upload Contract
-                    </Button>
                   </div>
                 </Card>
               )}
