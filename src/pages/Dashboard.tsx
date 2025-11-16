@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Upload, Clock, Shield, TrendingDown, Zap, Eye, Play, MessageSquare, Share2, AlertTriangle } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -23,7 +24,12 @@ const Dashboard = () => {
       riskLevel: "high" as const,
       savings: 8.2,
       nextAction: "Send to Legal for arbitration review",
-      actionOwner: "Legal Team"
+      actionOwner: "Legal Team",
+      stage: "compliance" as const,
+      hasUnresolvedHighSeverity: true,
+      hasUnresolvedRedlining: false,
+      hasPendingApprovals: false,
+      assignedTo: "Legal Team"
     },
     { 
       name: "Max Healthcare - Delhi NCR", 
@@ -33,7 +39,12 @@ const Dashboard = () => {
       riskLevel: "medium" as const,
       savings: 5.4,
       nextAction: "Finance team to validate escalation impact",
-      actionOwner: "Finance Team"
+      actionOwner: "Finance Team",
+      stage: "redlining" as const,
+      hasUnresolvedHighSeverity: false,
+      hasUnresolvedRedlining: true,
+      hasPendingApprovals: false,
+      assignedTo: "Finance Team"
     },
     { 
       name: "Fortis Memorial - Gurgaon", 
@@ -43,9 +54,86 @@ const Dashboard = () => {
       riskLevel: "low" as const,
       savings: 3.1,
       nextAction: "Review compliance alerts",
-      actionOwner: "Contracting Team"
+      actionOwner: "Contracting Team",
+      stage: "approvals" as const,
+      hasUnresolvedHighSeverity: false,
+      hasUnresolvedRedlining: false,
+      hasPendingApprovals: true,
+      assignedTo: "Contracting Team"
     },
   ];
+
+  // Sort contracts by risk and days old
+  const sortedContracts = [...contracts].sort((a, b) => {
+    // First by risk level
+    const riskOrder = { high: 3, medium: 2, low: 1 };
+    const riskDiff = riskOrder[b.riskLevel] - riskOrder[a.riskLevel];
+    if (riskDiff !== 0) return riskDiff;
+    // Then by days old
+    return b.days - a.days;
+  });
+
+  const getContractRoute = (contract: typeof contracts[0]) => {
+    // Determine where to route based on stage and unresolved items
+    if (contract.hasUnresolvedHighSeverity) {
+      return { path: "/upload", section: "alerts-section" };
+    } else if (contract.hasUnresolvedRedlining) {
+      return { path: "/redlining", section: null };
+    } else if (contract.hasPendingApprovals) {
+      return { path: "/approvals", section: null };
+    } else {
+      return { path: "/summary", section: null };
+    }
+  };
+
+  const getActionText = (contract: typeof contracts[0]) => {
+    if (contract.hasUnresolvedHighSeverity) {
+      return "Review Compliance Alerts";
+    } else if (contract.hasUnresolvedRedlining) {
+      return "Continue Redlining";
+    } else if (contract.hasPendingApprovals) {
+      return "Submit for Approval";
+    } else {
+      return "View Final Summary";
+    }
+  };
+
+  const handleReviewHighPriority = () => {
+    // Find the highest priority contract (first in sorted list)
+    const highestPriority = sortedContracts[0];
+    const route = getContractRoute(highestPriority);
+    
+    navigate(route.path);
+    
+    if (route.section) {
+      setTimeout(() => {
+        const section = document.getElementById(route.section);
+        section?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 100);
+    }
+
+    toast({
+      title: "High-Priority Contract",
+      description: "⚠️ You are viewing a high-priority contract — resolving this first prevents contract leakage.",
+    });
+  };
+
+  const handleContinueContract = (contract: typeof contracts[0]) => {
+    const route = getContractRoute(contract);
+    navigate(route.path);
+    
+    if (route.section) {
+      setTimeout(() => {
+        const section = document.getElementById(route.section);
+        section?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 100);
+    }
+  };
+
+  const isUserTurn = (contract: typeof contracts[0]) => {
+    // Check if current user (Sarah Chen - Negotiator) can act
+    return contract.assignedTo === "Contracting Team";
+  };
 
   const handleQuickAction = (action: string, contractName: string) => {
     toast({
@@ -78,10 +166,7 @@ const Dashboard = () => {
                 title="Next Best Action"
                 description="3 contracts require immediate attention"
                 action="Review High Priority"
-                onAction={() => {
-                  const firstHighRisk = document.querySelector('[data-risk="high"]');
-                  firstHighRisk?.scrollIntoView({ behavior: "smooth", block: "center" });
-                }}
+                onAction={handleReviewHighPriority}
                 variant="urgent"
               />
             </div>
@@ -152,11 +237,11 @@ const Dashboard = () => {
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-xl font-bold text-foreground">Pending Contracts</h2>
                   <Badge variant="outline" className="bg-amber-100 text-amber-700 border-amber-200">
-                    3 Urgent
+                    {sortedContracts.filter(c => c.days >= 7).length} Urgent
                   </Badge>
                 </div>
                 <div className="space-y-3">
-                  {contracts.map((contract, idx) => (
+                  {sortedContracts.map((contract, idx) => (
                     <div 
                       key={idx} 
                       className="p-4 border border-border rounded-lg hover:bg-accent transition-all animate-fade-in" 
@@ -174,6 +259,11 @@ const Dashboard = () => {
                             }>
                               {contract.riskLevel.toUpperCase()} RISK
                             </Badge>
+                            {contract.days >= 7 && (
+                              <Badge variant="outline" className="bg-amber-100 text-amber-700 border-amber-200">
+                                URGENT
+                              </Badge>
+                            )}
                           </div>
                           <p className="text-sm text-muted-foreground mb-2">{contract.status}</p>
                           <div className="flex items-center gap-3 text-xs">
@@ -193,21 +283,50 @@ const Dashboard = () => {
                       <div className="flex items-center justify-between pt-3 border-t border-border gap-3">
                         <Button 
                           size="sm" 
-                          onClick={() => navigate("/upload")}
+                          onClick={() => {
+                            const route = getContractRoute(contract);
+                            navigate(route.path);
+                            if (route.section) {
+                              setTimeout(() => {
+                                const section = document.getElementById(route.section);
+                                section?.scrollIntoView({ behavior: "smooth", block: "start" });
+                              }, 100);
+                            }
+                          }}
                           className="flex-1"
                         >
-                          {contract.nextAction}
+                          {getActionText(contract)}
                         </Button>
-                        <div className="flex items-center gap-1">
-                          <Button 
-                            size="sm" 
-                            variant="ghost"
-                            onClick={() => navigate("/upload")}
-                            className="h-8 px-3"
-                          >
-                            Open Workflow
-                          </Button>
-                        </div>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <div>
+                                {isUserTurn(contract) ? (
+                                  <Button 
+                                    size="sm" 
+                                    variant="outline"
+                                    onClick={() => handleContinueContract(contract)}
+                                    className="h-8 px-3"
+                                  >
+                                    Continue Contract
+                                  </Button>
+                                ) : (
+                                  <Button 
+                                    size="sm" 
+                                    variant="outline"
+                                    disabled
+                                    className="h-8 px-3"
+                                  >
+                                    Waiting on {contract.assignedTo}
+                                  </Button>
+                                )}
+                              </div>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>{isUserTurn(contract) ? "Resume the contract from where you left off" : "You'll be notified when your action is required"}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
                       </div>
                     </div>
                   ))}
