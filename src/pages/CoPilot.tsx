@@ -19,6 +19,7 @@ interface Message {
 const CoPilot = () => {
   const navigate = useNavigate();
   const [mode, setMode] = useState<"quick" | "chat">("quick");
+  const [insightMode, setInsightMode] = useState<"contract" | "general">("contract");
   const [messages, setMessages] = useState<Message[]>([
     { 
       role: "assistant", 
@@ -37,21 +38,198 @@ const CoPilot = () => {
   });
 
   // Contract context data (would come from props/context in real app)
-  const contractContext = {
+  // Set to null to simulate "no contract uploaded" state
+  const hasContract = true; // Toggle this to test both states
+  const contractContext = hasContract ? {
     provider: "Apollo Hospitals",
     lastModified: "Jan 15, 2025",
     openRisks: 3,
     potentialSavings: "₹12.8 Cr",
     riskLevel: "high" as const
-  };
+  } : null;
 
   const getDynamicSuggestions = () => {
+    if (insightMode === "general") {
+      return [
+        "What are negotiation best practices for healthcare contracts?",
+        "How do I handle difficult vendor escalations?",
+        "What are common price negotiation tactics?",
+        "How to build leverage in contract negotiations?",
+      ];
+    }
     return [
       "What are the high-risk clauses in this contract?",
       "How does Apollo's rate compare to market benchmarks?",
       "Draft a counter-proposal for the escalation clause",
       "What termination rights should we negotiate?",
     ];
+  };
+
+  const getGeneralQuickActions = () => [
+    { 
+      title: "Negotiation Best Practices", 
+      description: "Get proven strategies for successful contract negotiations",
+      icon: Sparkles,
+      action: () => handleGeneralAction("best-practices")
+    },
+    { 
+      title: "Industry Benchmarks", 
+      description: "Access market rate data and industry standards",
+      icon: BarChart,
+      action: () => handleGeneralAction("benchmarks")
+    },
+    { 
+      title: "Price Scripts", 
+      description: "Ready-to-use scripts for price negotiations",
+      icon: MessageCircle,
+      action: () => handleGeneralAction("scripts")
+    },
+    { 
+      title: "Escalation Strategies", 
+      description: "Tactical approaches for handling difficult situations",
+      icon: TrendingUp,
+      action: () => handleGeneralAction("escalation")
+    },
+  ];
+
+  const handleGeneralAction = (type: string) => {
+    let title = "";
+    let content = "";
+
+    switch (type) {
+      case "best-practices":
+        title = "Negotiation Best Practices";
+        content = `ESSENTIAL NEGOTIATION PRINCIPLES
+
+1. PREPARATION IS POWER
+• Research the vendor's market position
+• Know your BATNA (Best Alternative to Negotiated Agreement)
+• Document your requirements and priorities
+• Set clear walk-away points
+
+2. BUILD RELATIONSHIPS FIRST
+• Start with rapport building
+• Understand vendor's constraints and goals
+• Find mutual wins before making demands
+• Long-term partnerships > short-term wins
+
+3. ANCHOR STRATEGICALLY
+• Make the first offer when you have strong market data
+• Anchor high for concessions, but stay reasonable
+• Use data to justify your position
+• Never accept the first offer
+
+4. LISTEN MORE THAN YOU TALK
+• Ask open-ended questions
+• Pause after making offers
+• Look for non-verbal cues
+• Summarize their position to show understanding
+
+5. CREATE VALUE BEFORE CLAIMING IT
+• Identify multiple negotiable terms
+• Package concessions strategically
+• Look for low-cost, high-value trades
+• Expand the pie before dividing it`;
+        break;
+
+      case "benchmarks":
+        title = "Industry Benchmarks Guide";
+        content = `ACCESSING & USING MARKET BENCHMARKS
+
+HEALTHCARE PROVIDER RATES (2024-2025)
+• Tier-1 Metro Hospitals: ₹3,500 - ₹4,500 per diem
+• Tier-2 City Hospitals: ₹2,800 - ₹3,800 per diem
+• Specialty Clinics: ₹2,200 - ₹3,200 per diem
+• Diagnostic Centers: ₹1,800 - ₹2,500 per diem
+
+ESCALATION CLAUSES
+• Medical Inflation (2024): 6.2%
+• Standard Annual Increase: 5-7%
+• Performance-Based Add-On: 1-3%
+• CPI-Linked Adjustments: 3-5%
+
+CONTRACT TERMS
+• Payment Terms: 30-60 days standard
+• Termination Notice: 60-90 days typical
+• Auto-Renewal: 90-120 day notice period
+• Volume Discounts: 5-15% for committed volumes
+
+HOW TO USE BENCHMARKS EFFECTIVELY:
+1. Cite multiple sources (not just one)
+2. Adjust for geographic/size differences
+3. Show trending data over time
+4. Use ranges, not single point estimates
+5. Reference quality/performance metrics`;
+        break;
+
+      case "scripts":
+        title = "Price Negotiation Scripts";
+        content = `PROVEN PRICE NEGOTIATION SCRIPTS
+
+OPENING GAMBIT
+"We've done extensive market research and our budget for this engagement is [X]. I'd like to understand how we can structure a partnership within this range while ensuring you're able to deliver your best work."
+
+ANCHORING HIGH
+"Based on our analysis of comparable contracts in this space, we were expecting pricing in the range of [lower number]. Can you help me understand the value drivers that justify the gap?"
+
+CHALLENGING A PRICE INCREASE
+"I appreciate the escalation request, but our data shows medical inflation at 6.2% this year. Your proposal of [X%] exceeds market benchmarks. Can we discuss a more market-aligned increase?"
+
+ASKING FOR CONCESSIONS
+"If we're able to commit to [volume/term/early payment], what pricing adjustments could you offer to make this work within our budget constraints?"
+
+PLAYING GOOD COP
+"I really want to make this work, but I need your help. My CFO has set a firm ceiling at [X]. What creative solutions could we explore to bridge this gap?"
+
+THE FLINCH
+[After hearing price] "Wow, that's significantly higher than we anticipated. I'm going to need you to walk me through the justification before I can even present this internally."
+
+CREATING URGENCY
+"We're reviewing three proposals this week and need to finalize by [date]. If you can meet us at [price], I'm prepared to recommend your proposal immediately."
+
+WALK-AWAY SIGNAL
+"I appreciate your time, but at this price point, we may need to explore alternative options. Is there any flexibility before we conclude our discussions?"`;
+        break;
+
+      case "escalation":
+        title = "Escalation Strategies";
+        content = `TACTICAL ESCALATION APPROACHES
+
+WHEN TO ESCALATE
+✓ Negotiations stalled for 2+ weeks
+✓ Terms significantly exceed benchmarks
+✓ Vendor unwilling to justify pricing
+✓ Decision-maker not at the table
+✗ Too early in the process
+✗ Without exhausting ground-level options
+✗ As a bluff or emotional reaction
+
+ESCALATION LADDER
+
+LEVEL 1: PEER ESCALATION
+"I'd like to involve my Director to discuss the strategic aspects of this partnership. Would your VP be available for a joint call?"
+
+LEVEL 2: DATA-DRIVEN PRESSURE
+"I've prepared a detailed benchmark analysis showing a 23% premium in your proposal. Before escalating to my CFO, I wanted to give you the opportunity to review and respond."
+
+LEVEL 3: MULTI-VENDOR COMPARISON
+"We're currently evaluating proposals from [Competitor A] and [Competitor B]. Your quality is superior, but the price gap makes it difficult to justify. Can we discuss how to close this?"
+
+LEVEL 4: EXECUTIVE INVOLVEMENT
+"This partnership is strategically important to us. I'd like to arrange a discussion between our CPO and your leadership to align on a framework that works for both organizations."
+
+LEVEL 5: WALK-AWAY PREPARATION
+"Despite our best efforts, we haven't been able to reach terms that work for our organization. I wanted to thank you for your time and leave the door open for future opportunities."
+
+POST-ESCALATION STRATEGIES:
+• Give them 48-72 hours to respond
+• Document all positions in writing
+• Maintain professional tone throughout
+• Be prepared to actually walk away`;
+        break;
+    }
+
+    setOutputModal({ open: true, title, content, type: "summary" });
   };
 
   const handleQuickAction = (type: "email" | "talking-points" | "summary" | "justification" | "comparison") => {
@@ -422,21 +600,34 @@ Market Positioning
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
-      
-      <main className="max-w-6xl mx-auto px-6 py-12">
-        <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-foreground mb-2">Negotiation Co-Pilot</h1>
-              <p className="text-muted-foreground">
-                AI-powered command center for contract insights, benchmarks, and negotiation strategies
-              </p>
-            </div>
-            <Button onClick={() => navigate("/redlining")} className="gap-2">
-              Start Redlining
-              <ArrowRight className="w-4 h-4" />
+      <main className="max-w-6xl mx-auto p-6 space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground mb-2">Negotiation Co-Pilot</h1>
+            <p className="text-muted-foreground">AI-powered insights for smarter contract negotiations</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="text-sm text-muted-foreground">Mode:</span>
+            <Button 
+              variant={insightMode === "contract" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setInsightMode("contract")}
+              className="gap-2"
+            >
+              <span className={insightMode === "contract" ? "text-primary-foreground" : ""}>●</span>
+              Contract Insights
+            </Button>
+            <Button 
+              variant={insightMode === "general" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setInsightMode("general")}
+              className="gap-2"
+            >
+              <span className={insightMode === "general" ? "text-primary-foreground" : ""}>○</span>
+              General Insights
             </Button>
           </div>
+        </div>
 
           {/* Two-Mode CTA Bar */}
           <Tabs value={mode} onValueChange={(v) => setMode(v as "quick" | "chat")} className="w-full">
