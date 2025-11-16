@@ -747,7 +747,7 @@ HiLabs Contract Negotiation Team`;
                         The Co-Pilot will then extract clauses, compare benchmarks, and answer contract-specific questions.
                       </p>
                     </div>
-                    <Button size="lg" onClick={() => navigate("/upload-contract")}>
+                    <Button size="lg" onClick={() => navigate("/upload")}>
                       Upload Contract
                     </Button>
                   </div>
@@ -791,7 +791,7 @@ HiLabs Contract Negotiation Team`;
                           variant="ghost" 
                           size="sm" 
                           className="text-xs text-primary hover:text-primary"
-                          onClick={() => navigate("/upload-contract")}
+                          onClick={() => navigate("/upload")}
                         >
                           Change Contract
                         </Button>
