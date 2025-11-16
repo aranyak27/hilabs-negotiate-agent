@@ -3,16 +3,32 @@ import CoPilotOutputModal from "@/components/CoPilotOutputModal";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { ArrowRight, MessageSquare, Send, Mail, MessageCircle, FileText, TrendingDown, BarChart } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ArrowRight, MessageSquare, Send, Mail, MessageCircle, FileText, TrendingDown, BarChart, AlertCircle, TrendingUp, Calendar, Sparkles } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 
+interface Message {
+  role: "user" | "assistant";
+  content: string;
+  sources?: string[];
+  actions?: { label: string; onClick: () => void }[];
+}
+
 const CoPilot = () => {
   const navigate = useNavigate();
-  const [messages, setMessages] = useState([
-    { role: "assistant", content: "Hello! I'm your Negotiation Co-Pilot. I can help you with contract insights, past deal comparisons, and negotiation strategies. What would you like to know?" },
+  const [mode, setMode] = useState<"quick" | "chat">("quick");
+  const [messages, setMessages] = useState<Message[]>([
+    { 
+      role: "assistant", 
+      content: "Hello! I'm your Negotiation Co-Pilot. I can help you with contract insights, past deal comparisons, and negotiation strategies. What would you like to know?",
+      sources: ["Contract Database", "Negotiation Playbook"],
+      actions: []
+    },
   ]);
   const [input, setInput] = useState("");
+  const [followUpSuggestions, setFollowUpSuggestions] = useState<string[]>([]);
   const [outputModal, setOutputModal] = useState<{ open: boolean; title: string; content: string; type: "email" | "talking-points" | "summary" | "justification" | "comparison" }>({ 
     open: false, 
     title: "", 
@@ -20,12 +36,23 @@ const CoPilot = () => {
     type: "email"
   });
 
-  const suggestedPrompts = [
-    "What did we sign with Apollo last time?",
-    "Give negotiation justification for lowering escalation.",
-    "Suggest fallback clause for termination rights.",
-    "Compare this rate with similar providers.",
-  ];
+  // Contract context data (would come from props/context in real app)
+  const contractContext = {
+    provider: "Apollo Hospitals",
+    lastModified: "Jan 15, 2025",
+    openRisks: 3,
+    potentialSavings: "₹12.8 Cr",
+    riskLevel: "high" as const
+  };
+
+  const getDynamicSuggestions = () => {
+    return [
+      "What are the high-risk clauses in this contract?",
+      "How does Apollo's rate compare to market benchmarks?",
+      "Draft a counter-proposal for the escalation clause",
+      "What termination rights should we negotiate?",
+    ];
+  };
 
   const handleQuickAction = (type: "email" | "talking-points" | "summary" | "justification" | "comparison") => {
     let title = "";
@@ -332,16 +359,63 @@ Market Positioning
     // Simulate AI response
     setTimeout(() => {
       let response = "";
-      if (userMessage.includes("Apollo last time")) {
-        response = "In our 2024 contract with Apollo Hospitals Bangalore, we negotiated:\n\n• Base rate: ₹3,800 per diem (down from ₹4,100)\n• Escalation: 5% annual\n• Termination: 90-day notice period\n• Quality metrics: 10% of payments tied to NABH scores\n• Dispute resolution: ICADR arbitration in Mumbai\n\nThe negotiation took 21 days and saved an estimated ₹8.2 Cr over the 3-year term.";
-      } else if (userMessage.includes("escalation")) {
-        response = "Here's your negotiation justification for requesting 5% instead of 8% escalation:\n\n**Market Benchmark**: Medical inflation in India averaged 6.2% in 2024. The proposed 8% exceeds market trends.\n\n**Comparable Contracts**: Max Healthcare (5%), Fortis (5%), Manipal (4.5%) - all tier-1 hospitals accepted 5% or lower.\n\n**Historical Precedent**: Our 2024 Apollo contract used 5% escalation with quality-based incentives as an alternative value-sharing mechanism.\n\n**Financial Impact**: The 3% difference equates to ₹4.8 Cr additional cost over 3 years.\n\nRecommendation: Propose 5% escalation with a 2% quality incentive pool tied to patient outcomes.";
+      let sources: string[] = [];
+      let actions: { label: string; onClick: () => void }[] = [];
+      let suggestions: string[] = [];
+
+      if (userMessage.includes("Apollo last time") || userMessage.includes("high-risk")) {
+        response = "## Apollo Hospitals 2024 Contract Summary\n\nIn our 2024 contract with Apollo Hospitals Bangalore, we negotiated:\n\n• **Base rate**: ₹3,800 per diem (down from ₹4,100)\n• **Escalation**: 5% annual\n• **Termination**: 90-day notice period\n• **Quality metrics**: 10% of payments tied to NABH scores\n• **Dispute resolution**: ICADR arbitration in Mumbai\n\nThe negotiation took 21 days and saved an estimated **₹8.2 Cr** over the 3-year term.";
+        sources = ["Apollo 2024 Contract", "Historical Deal Database"];
+        actions = [
+          { label: "View Full Contract", onClick: () => navigate("/repository") },
+          { label: "Compare to Current Terms", onClick: () => handleQuickAction("comparison") },
+        ];
+        suggestions = [
+          "What were the key negotiation points?",
+          "How can we improve on the 2024 terms?",
+          "Draft email referencing historical agreement"
+        ];
+      } else if (userMessage.includes("escalation") || userMessage.includes("counter-proposal")) {
+        response = "## Escalation Justification\n\nHere's your negotiation justification for requesting **5% instead of 8%** escalation:\n\n### Market Benchmark\nMedical inflation in India averaged 6.2% in 2024. The proposed 8% exceeds market trends.\n\n### Comparable Contracts\n• Max Healthcare: 5%\n• Fortis: 5%\n• Manipal: 4.5%\n\nAll tier-1 hospitals accepted 5% or lower.\n\n### Financial Impact\nThe 3% difference equates to **₹4.8 Cr additional cost** over 3 years.\n\n**Recommendation**: Propose 5% escalation with a 2% quality incentive pool tied to patient outcomes.";
+        sources = ["Market Benchmark Report 2024", "Contract Database", "Negotiation Playbook"];
+        actions = [
+          { label: "Draft Counter-Proposal", onClick: () => alert("Generating counter-proposal...") },
+          { label: "Generate Email", onClick: () => handleQuickAction("email") },
+          { label: "Share with CFO", onClick: () => alert("Sharing justification with CFO...") }
+        ];
+        suggestions = [
+          "What are the risks of accepting 8%?",
+          "Show me quality incentive examples",
+          "Create CFO justification document"
+        ];
       } else if (userMessage.includes("fallback") && userMessage.includes("termination")) {
-        response = "**Recommended Fallback Clause for Termination Rights**\n\n*Standard playbook language (Legal approved):*\n\n\"Either party may terminate this Agreement with ninety (90) days written notice. In the event of termination, Provider shall continue to provide care for all patients currently under treatment for a transition period of up to six (6) months at the contracted rates to ensure care continuity.\"\n\n**Justification**: This clause protects patient care continuity while giving both parties adequate planning time. Used successfully in 14 similar contracts in 2024.";
+        response = "## Recommended Fallback Clause\n\n### Standard Playbook Language (Legal Approved)\n\n*\"Either party may terminate this Agreement with ninety (90) days written notice. In the event of termination, Provider shall continue to provide care for all patients currently under treatment for a transition period of up to six (6) months at the contracted rates to ensure care continuity.\"*\n\n### Justification\nThis clause protects patient care continuity while giving both parties adequate planning time. Used successfully in **14 similar contracts** in 2024.";
+        sources = ["Legal Playbook v3.2", "Contract Templates"];
+        actions = [
+          { label: "Apply Fallback Clause", onClick: () => alert("Applying clause to contract...") },
+          { label: "Send to Legal", onClick: () => alert("Forwarding to Legal team...") }
+        ];
+        suggestions = [
+          "What other termination clauses should we consider?",
+          "Show me provider pushback scenarios",
+          "Draft talking points for this clause"
+        ];
       } else {
-        response = "I can help you with that. Based on our contract database and negotiation playbooks, I found relevant information. Would you like me to provide specific details on rates, clauses, or negotiation strategies?";
+        response = "I can help you with that. Based on our contract database and negotiation playbooks, I found relevant information.\n\n### Available Actions\n• Provide specific details on rates\n• Analyze contract clauses\n• Generate negotiation strategies\n• Compare with past deals\n\nWhat would you like to explore?";
+        sources = ["Contract Database", "Negotiation Playbook"];
+        actions = [
+          { label: "Show Benchmarks", onClick: () => handleQuickAction("comparison") },
+          { label: "Generate Talking Points", onClick: () => handleQuickAction("talking-points") }
+        ];
+        suggestions = [
+          "What are the key risks in this contract?",
+          "Compare rates with competitors",
+          "Draft counter-proposal email"
+        ];
       }
-      setMessages(prev => [...prev, { role: "assistant", content: response }]);
+
+      setMessages(prev => [...prev, { role: "assistant", content: response, sources, actions }]);
+      setFollowUpSuggestions(suggestions);
     }, 1000);
   };
 
@@ -349,13 +423,13 @@ Market Positioning
     <div className="min-h-screen bg-background">
       <Navigation />
       
-      <main className="max-w-4xl mx-auto px-6 py-12">
-        <div className="space-y-8">
+      <main className="max-w-6xl mx-auto px-6 py-12">
+        <div className="space-y-6">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-foreground mb-2">Negotiation Co-Pilot</h1>
               <p className="text-muted-foreground">
-                Ask questions in natural language and get instant contract insights
+                AI-powered command center for contract insights, benchmarks, and negotiation strategies
               </p>
             </div>
             <Button onClick={() => navigate("/redlining")} className="gap-2">
@@ -364,113 +438,272 @@ Market Positioning
             </Button>
           </div>
 
-          {/* Quick Actions */}
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
-            <Button 
-              variant="outline" 
-              className="flex-col h-auto py-4 gap-2 hover:bg-accent"
-              onClick={() => handleQuickAction("email")}
-            >
-              <Mail className="w-5 h-5 text-primary" />
-              <span className="text-xs text-center">Generate Email</span>
-            </Button>
-            <Button 
-              variant="outline" 
-              className="flex-col h-auto py-4 gap-2 hover:bg-accent"
-              onClick={() => handleQuickAction("talking-points")}
-            >
-              <MessageCircle className="w-5 h-5 text-primary" />
-              <span className="text-xs text-center">Talking Points</span>
-            </Button>
-            <Button 
-              variant="outline" 
-              className="flex-col h-auto py-4 gap-2 hover:bg-accent"
-              onClick={() => handleQuickAction("summary")}
-            >
-              <FileText className="w-5 h-5 text-primary" />
-              <span className="text-xs text-center">Summarize Changes</span>
-            </Button>
-            <Button 
-              variant="outline" 
-              className="flex-col h-auto py-4 gap-2 hover:bg-accent"
-              onClick={() => handleQuickAction("justification")}
-            >
-              <TrendingDown className="w-5 h-5 text-primary" />
-              <span className="text-xs text-center">Escalation Justification</span>
-            </Button>
-            <Button 
-              variant="outline" 
-              className="flex-col h-auto py-4 gap-2 hover:bg-accent"
-              onClick={() => handleQuickAction("comparison")}
-            >
-              <BarChart className="w-5 h-5 text-primary" />
-              <span className="text-xs text-center">Compare Rates</span>
-            </Button>
-          </div>
+          {/* Two-Mode CTA Bar */}
+          <Tabs value={mode} onValueChange={(v) => setMode(v as "quick" | "chat")} className="w-full">
+            <TabsList className="grid w-full grid-cols-2 mb-6">
+              <TabsTrigger value="quick" className="gap-2">
+                <Sparkles className="w-4 h-4" />
+                Quick Outputs
+              </TabsTrigger>
+              <TabsTrigger value="chat" className="gap-2">
+                <MessageSquare className="w-4 h-4" />
+                Full Co-Pilot Chat
+              </TabsTrigger>
+            </TabsList>
 
-          <Card className="border-border">
-            <div className="h-[400px] flex flex-col">
-              {/* Messages */}
-              <div className="flex-1 overflow-y-auto p-6 space-y-4">
-                {messages.map((msg, idx) => (
-                  <div
-                    key={idx}
-                    className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
-                  >
-                    <div
-                      className={`max-w-[80%] rounded-lg p-4 ${
-                        msg.role === "user"
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-muted text-foreground"
-                      }`}
-                    >
-                      {msg.role === "assistant" && (
-                        <div className="flex items-center gap-2 mb-2">
-                          <MessageSquare className="w-4 h-4 text-primary" />
-                          <span className="text-xs font-semibold text-primary">Co-Pilot</span>
-                        </div>
-                      )}
-                      <p className="text-sm whitespace-pre-line">{msg.content}</p>
+            <TabsContent value="quick" className="space-y-6">
+              {/* Quick Action Buttons */}
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+                <Button 
+                  variant="outline" 
+                  className="flex-col h-auto py-4 gap-2 hover:bg-accent hover:border-primary transition-all"
+                  onClick={() => handleQuickAction("email")}
+                >
+                  <Mail className="w-5 h-5 text-primary" />
+                  <span className="text-xs text-center font-medium">Email</span>
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className="flex-col h-auto py-4 gap-2 hover:bg-accent hover:border-primary transition-all"
+                  onClick={() => handleQuickAction("talking-points")}
+                >
+                  <MessageCircle className="w-5 h-5 text-primary" />
+                  <span className="text-xs text-center font-medium">Talking Points</span>
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className="flex-col h-auto py-4 gap-2 hover:bg-accent hover:border-primary transition-all"
+                  onClick={() => handleQuickAction("summary")}
+                >
+                  <FileText className="w-5 h-5 text-primary" />
+                  <span className="text-xs text-center font-medium">Exec Summary</span>
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className="flex-col h-auto py-4 gap-2 hover:bg-accent hover:border-primary transition-all"
+                  onClick={() => handleQuickAction("justification")}
+                >
+                  <TrendingDown className="w-5 h-5 text-primary" />
+                  <span className="text-xs text-center font-medium">CFO Justification</span>
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className="flex-col h-auto py-4 gap-2 hover:bg-accent hover:border-primary transition-all"
+                  onClick={() => handleQuickAction("comparison")}
+                >
+                  <BarChart className="w-5 h-5 text-primary" />
+                  <span className="text-xs text-center font-medium">Price Benchmarks</span>
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className="flex-col h-auto py-4 gap-2 hover:bg-accent hover:border-primary transition-all"
+                  onClick={() => {
+                    handleQuickAction("email");
+                    // In a real app, this would generate a counter-proposal
+                  }}
+                >
+                  <FileText className="w-5 h-5 text-primary" />
+                  <span className="text-xs text-center font-medium">Counter-Proposal</span>
+                </Button>
+              </div>
+
+              {/* Contract Context Panel */}
+              <Card className="bg-accent/50 border-border">
+                <div className="p-4">
+                  <div className="flex items-start justify-between mb-3">
+                    <div>
+                      <h3 className="text-sm font-semibold text-foreground mb-1">{contractContext.provider}</h3>
+                      <p className="text-xs text-muted-foreground flex items-center gap-1">
+                        <Calendar className="w-3 h-3" />
+                        Last modified: {contractContext.lastModified}
+                      </p>
+                    </div>
+                    <Badge variant={contractContext.riskLevel === "high" ? "destructive" : "secondary"}>
+                      {contractContext.riskLevel.toUpperCase()} RISK
+                    </Badge>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3 mb-3">
+                    <div className="flex items-center gap-2">
+                      <AlertCircle className="w-4 h-4 text-destructive" />
+                      <span className="text-xs text-foreground"><span className="font-semibold">{contractContext.openRisks}</span> open risks</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <TrendingUp className="w-4 h-4 text-green-600" />
+                      <span className="text-xs text-foreground">Potential savings: <span className="font-semibold">{contractContext.potentialSavings}</span></span>
                     </div>
                   </div>
-                ))}
-              </div>
+                  <p className="text-xs text-muted-foreground italic flex items-center gap-1">
+                    <Sparkles className="w-3 h-3" />
+                    AI grounded to this contract + playbook + past deals + benchmarks
+                  </p>
+                </div>
+              </Card>
+            </TabsContent>
 
-              {/* Suggested Prompts */}
-              {messages.length === 1 && (
-                <div className="px-6 pb-4">
-                  <p className="text-xs text-muted-foreground mb-2">Try asking:</p>
-                  <div className="grid grid-cols-2 gap-2">
-                    {suggestedPrompts.map((prompt, idx) => (
-                      <button
-                        key={idx}
-                        onClick={() => handleSend(prompt)}
-                        className="text-left text-xs p-2 border border-border rounded-md hover:bg-accent transition-colors"
-                      >
-                        {prompt}
-                      </button>
+            <TabsContent value="chat" className="space-y-6">
+              {/* Contract Context Panel */}
+              <Card className="bg-accent/50 border-border">
+                <div className="p-4">
+                  <div className="flex items-start justify-between mb-3">
+                    <div>
+                      <h3 className="text-sm font-semibold text-foreground mb-1">{contractContext.provider}</h3>
+                      <p className="text-xs text-muted-foreground flex items-center gap-1">
+                        <Calendar className="w-3 h-3" />
+                        Last modified: {contractContext.lastModified}
+                      </p>
+                    </div>
+                    <Badge variant={contractContext.riskLevel === "high" ? "destructive" : "secondary"}>
+                      {contractContext.riskLevel.toUpperCase()} RISK
+                    </Badge>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3 mb-3">
+                    <div className="flex items-center gap-2">
+                      <AlertCircle className="w-4 h-4 text-destructive" />
+                      <span className="text-xs text-foreground"><span className="font-semibold">{contractContext.openRisks}</span> open risks</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <TrendingUp className="w-4 h-4 text-green-600" />
+                      <span className="text-xs text-foreground">Potential savings: <span className="font-semibold">{contractContext.potentialSavings}</span></span>
+                    </div>
+                  </div>
+                  <p className="text-xs text-muted-foreground italic flex items-center gap-1">
+                    <Sparkles className="w-3 h-3" />
+                    AI grounded to this contract + playbook + past deals + benchmarks
+                  </p>
+                </div>
+              </Card>
+
+              {/* Enhanced Chat Interface */}
+              <Card className="border-border">
+                <div className="h-[500px] flex flex-col">
+                  {/* Messages */}
+                  <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                    {messages.map((msg, idx) => (
+                      <div key={idx} className="space-y-3">
+                        <div className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+                          <div
+                            className={`max-w-[75%] rounded-lg p-4 ${
+                              msg.role === "user"
+                                ? "bg-primary text-primary-foreground ml-auto"
+                                : "bg-muted text-foreground border border-border"
+                            }`}
+                          >
+                            {msg.role === "assistant" && (
+                              <div className="flex items-center gap-2 mb-3 pb-2 border-b border-border">
+                                <MessageSquare className="w-4 h-4 text-primary" />
+                                <span className="text-xs font-semibold text-primary">Co-Pilot</span>
+                              </div>
+                            )}
+                            <div 
+                              className={`text-sm ${msg.role === "assistant" ? "prose prose-sm max-w-none" : ""}`}
+                              dangerouslySetInnerHTML={{ 
+                                __html: msg.role === "assistant" 
+                                  ? msg.content
+                                      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                                      .replace(/^## (.*$)/gm, '<h2 class="text-base font-bold mb-2 mt-3 text-foreground">$1</h2>')
+                                      .replace(/^### (.*$)/gm, '<h3 class="text-sm font-semibold mb-2 mt-2 text-foreground">$1</h3>')
+                                      .replace(/^• (.*$)/gm, '<li class="ml-4">$1</li>')
+                                      .replace(/\n/g, '<br>')
+                                  : msg.content.replace(/\n/g, '<br>')
+                              }}
+                            />
+                            
+                            {msg.role === "assistant" && msg.sources && msg.sources.length > 0 && (
+                              <div className="mt-4 pt-3 border-t border-border">
+                                <p className="text-xs text-muted-foreground mb-1">Sources referenced:</p>
+                                <div className="flex flex-wrap gap-1">
+                                  {msg.sources.map((source, idx) => (
+                                    <Badge key={idx} variant="secondary" className="text-xs">
+                                      {source}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            {msg.role === "assistant" && msg.actions && msg.actions.length > 0 && (
+                              <div className="mt-4 pt-3 border-t border-border space-y-2">
+                                <p className="text-xs text-muted-foreground mb-2">Recommended next steps:</p>
+                                <div className="flex flex-wrap gap-2">
+                                  {msg.actions.map((action, idx) => (
+                                    <Button
+                                      key={idx}
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={action.onClick}
+                                      className="text-xs h-8"
+                                    >
+                                      {action.label}
+                                    </Button>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Follow-up suggestions after AI messages */}
+                        {msg.role === "assistant" && idx === messages.length - 1 && followUpSuggestions.length > 0 && (
+                          <div className="flex justify-start">
+                            <div className="max-w-[75%] space-y-2">
+                              <p className="text-xs text-muted-foreground px-2">Continue with:</p>
+                              <div className="flex flex-wrap gap-2">
+                                {followUpSuggestions.slice(0, 3).map((suggestion, sidx) => (
+                                  <Button
+                                    key={sidx}
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() => handleSend(suggestion)}
+                                    className="text-xs h-auto py-2 px-3 border border-border hover:bg-accent hover:border-primary"
+                                  >
+                                    {suggestion}
+                                  </Button>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     ))}
                   </div>
-                </div>
-              )}
 
-              {/* Input */}
-              <div className="border-t border-border p-4">
-                <div className="flex gap-2">
-                  <Input
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    onKeyPress={(e) => e.key === "Enter" && handleSend()}
-                    placeholder="Ask me anything about contracts, rates, or negotiation strategies..."
-                    className="flex-1"
-                  />
-                  <Button onClick={() => handleSend()} size="icon">
-                    <Send className="w-4 h-4" />
-                  </Button>
+                  {/* Dynamic Suggested Prompts */}
+                  {messages.length === 1 && (
+                    <div className="px-6 pb-4">
+                      <p className="text-xs text-muted-foreground mb-2">Suggested prompts based on contract analysis:</p>
+                      <div className="grid grid-cols-2 gap-2">
+                        {getDynamicSuggestions().map((prompt, idx) => (
+                          <button
+                            key={idx}
+                            onClick={() => handleSend(prompt)}
+                            className="text-left text-xs p-3 border border-border rounded-md hover:bg-accent hover:border-primary transition-all"
+                          >
+                            {prompt}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Input */}
+                  <div className="border-t border-border p-4 bg-background">
+                    <div className="flex gap-2">
+                      <Input
+                        value={input}
+                        onChange={(e) => setInput(e.target.value)}
+                        onKeyPress={(e) => e.key === "Enter" && handleSend()}
+                        placeholder="Ask about risks, benchmarks, clauses, or negotiation strategies..."
+                        className="flex-1"
+                      />
+                      <Button onClick={() => handleSend()} size="icon">
+                        <Send className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
-          </Card>
+              </Card>
+            </TabsContent>
+          </Tabs>
         </div>
       </main>
 
