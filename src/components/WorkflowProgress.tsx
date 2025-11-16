@@ -4,8 +4,6 @@ import { useLocation } from "react-router-dom";
 const steps = [
   { path: "/upload", label: "Upload & Analyze" },
   { path: "/redlining", label: "Redline" },
-  { path: "/approvals", label: "Approvals" },
-  { path: "/summary", label: "Summary" },
 ];
 
 const WorkflowProgress = () => {
