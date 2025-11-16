@@ -1,8 +1,12 @@
 import Navigation from "@/components/Navigation";
+import Breadcrumbs from "@/components/Breadcrumbs";
+import WorkflowProgress from "@/components/WorkflowProgress";
+import NextActionBanner from "@/components/NextActionBanner";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { CheckCircle, Clock, XCircle, ArrowRight } from "lucide-react";
+import { CheckCircle, Clock, XCircle, ArrowRight, Bell, Mail } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
 
 const approvers = [
   { role: "Negotiator", name: "Sarah Chen", status: "approved", date: "2025-01-15 14:30", notes: "Counter-proposals aligned with playbook" },
@@ -13,16 +17,34 @@ const approvers = [
 
 const Approvals = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
+
+  const handleReminder = (name: string) => {
+    toast({
+      title: "Reminder sent",
+      description: `Notification sent to ${name}`,
+    });
+  };
+
+  const handleAutoEscalate = () => {
+    toast({
+      title: "Auto-escalation enabled",
+      description: "Contract will escalate to Leadership after 3 days if not approved",
+    });
+  };
 
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
       
-      <main className="max-w-5xl mx-auto px-6 py-12">
+      <main className="max-w-5xl mx-auto px-6 py-8">
         <div className="space-y-8">
+          <Breadcrumbs />
+          <WorkflowProgress />
+
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-foreground mb-2">Internal Approvals</h1>
+              <h1 className="text-3xl font-bold text-foreground mb-2 animate-fade-in">Internal Approvals</h1>
               <p className="text-muted-foreground">
                 Apollo Hospitals - Master Service Agreement (Rev 3)
               </p>
@@ -33,11 +55,25 @@ const Approvals = () => {
             </Button>
           </div>
 
+          <NextActionBanner
+            title="Pending Approvals"
+            description="Waiting for Legal and Finance review - send reminder if needed"
+            action="Send Reminder to All"
+            onAction={() => handleReminder("All pending approvers")}
+            variant="default"
+          />
+
           <Card className="p-6 border-border">
-            <h2 className="text-xl font-semibold text-foreground mb-6">Approval Matrix</h2>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-semibold text-foreground">Approval Matrix</h2>
+              <Button onClick={handleAutoEscalate} size="sm" variant="outline" className="gap-2">
+                <Bell className="w-4 h-4" />
+                Enable Auto-Escalation
+              </Button>
+            </div>
             <div className="space-y-4">
               {approvers.map((approver, idx) => (
-                <div key={idx} className="flex items-center gap-4 p-4 border border-border rounded-lg">
+                <div key={idx} className="flex items-center gap-4 p-4 border border-border rounded-lg animate-fade-in hover:bg-muted/30 transition-all" style={{ animationDelay: `${idx * 100}ms` }}>
                   <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
                     {approver.status === "approved" ? (
                       <CheckCircle className="w-6 h-6 text-green-600" />
@@ -63,12 +99,30 @@ const Approvals = () => {
                       </div>
                     )}
                     {approver.status === "pending" && (
-                      <p className="text-sm text-yellow-600 font-medium">⏳ Pending Review</p>
+                      <div>
+                        <p className="text-sm text-yellow-600 font-medium">⏳ Pending Review</p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Common approval reasons: Playbook aligned • Market competitive • Compliance verified
+                        </p>
+                      </div>
                     )}
                   </div>
 
-                  {approver.status === "pending" && approver.role === "Legal" && (
-                    <Button size="sm">Review Now</Button>
+                  {approver.status === "pending" && (
+                    <div className="flex gap-2">
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => handleReminder(approver.name)}
+                        className="gap-1"
+                      >
+                        <Mail className="w-3 h-3" />
+                        Send Reminder
+                      </Button>
+                      {approver.role === "Legal" && (
+                        <Button size="sm">Review Now</Button>
+                      )}
+                    </div>
                   )}
                 </div>
               ))}

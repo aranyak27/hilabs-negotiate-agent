@@ -1,4 +1,8 @@
 import Navigation from "@/components/Navigation";
+import Breadcrumbs from "@/components/Breadcrumbs";
+import WorkflowProgress from "@/components/WorkflowProgress";
+import NextActionBanner from "@/components/NextActionBanner";
+import FinancialWidget from "@/components/FinancialWidget";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -6,9 +10,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Upload, FileText, Loader2, AlertTriangle, CheckCircle, TrendingUp, Calculator, MessageSquare, FileDown, Mail } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Upload, FileText, Loader2, AlertTriangle, CheckCircle, TrendingUp, Calculator, MessageSquare, FileDown, Info, Filter, CheckCheck, Clock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 const clauses = [
   { title: "Payment Terms", status: "Compliant", risk: "low", lastSeen: "Q2 2024 - Apollo Chennai", notes: "90-day payment cycle" },
@@ -55,19 +62,39 @@ const providers = [
 
 const UploadContract = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [isProcessing, setIsProcessing] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const [baseRate, setBaseRate] = useState(4200);
   const [escalation, setEscalation] = useState(8);
   const [incentive, setIncentive] = useState(10);
+  const [riskFilter, setRiskFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
 
   const handleUpload = () => {
     setIsProcessing(true);
     setTimeout(() => {
       setIsProcessing(false);
       setShowResults(true);
+      toast({
+        title: "Contract processed successfully",
+        description: "42 clauses extracted • 2 compliance issues detected",
+      });
     }, 3000);
   };
+
+  const handleAcceptCompliant = () => {
+    toast({
+      title: "Compliant clauses accepted",
+      description: "5 clauses marked as approved",
+    });
+  };
+
+  const filteredClauses = clauses.filter(clause => {
+    const matchesRisk = riskFilter === "all" || clause.risk === riskFilter;
+    const matchesStatus = statusFilter === "all" || clause.status.toLowerCase().includes(statusFilter.toLowerCase());
+    return matchesRisk && matchesStatus;
+  });
 
   const getRiskColor = (risk: string) => {
     switch (risk) {
@@ -188,49 +215,307 @@ const UploadContract = () => {
     <div className="min-h-screen bg-background">
       <Navigation />
       
-      <main className="max-w-7xl mx-auto px-6 py-12">
-        <div className="space-y-12">
-          {/* Header */}
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-foreground mb-2">Contract Analysis Complete</h1>
-              <p className="text-muted-foreground">
+      <main className="max-w-7xl mx-auto px-6 py-8">
+        <div className="space-y-8">
+          <Breadcrumbs />
+          <WorkflowProgress />
+
+          {/* Header with Financial Widget */}
+          <div className="flex items-start justify-between gap-6">
+            <div className="flex-1">
+              <h1 className="text-3xl font-bold text-foreground mb-2 animate-fade-in">Contract Analysis Complete</h1>
+              <p className="text-muted-foreground mb-4">
                 Apollo Hospitals - Master Service Agreement • Extracted 42 clauses
               </p>
+              <div className="flex items-center gap-4 text-sm">
+                <div className="flex items-center gap-1">
+                  <Clock className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-muted-foreground">Est. approval time: <strong className="text-foreground">5-7 days</strong></span>
+                </div>
+              </div>
             </div>
-            <div className="flex gap-2">
-              <Button onClick={() => navigate("/approvals")} className="gap-2">
-                Submit for Approval
-              </Button>
-              <Button variant="outline" className="gap-2">
-                <FileDown className="w-4 h-4" />
-                Export Report
-              </Button>
-            </div>
+            <FinancialWidget
+              savings={12.8}
+              payoutChange={19.4}
+              riskLevel="high"
+            />
           </div>
+
+          {/* Next Action Banner */}
+          <NextActionBanner
+            title="Next Best Action"
+            description="Review 2 high-severity compliance alerts before proceeding"
+            action="Jump to Compliance"
+            onAction={() => document.getElementById("compliance-section")?.scrollIntoView({ behavior: "smooth" })}
+            variant="urgent"
+          />
 
           {/* Quick Stats */}
           <div className="grid grid-cols-3 gap-6">
-            <div className="bg-green-50 border border-green-200 rounded-lg p-6 text-center">
+            <div className="bg-green-50 border border-green-200 rounded-lg p-6 text-center hover-scale">
               <p className="text-3xl font-bold text-green-700 mb-1">5</p>
               <p className="text-sm text-green-600">Compliant Clauses</p>
             </div>
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center">
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center hover-scale">
               <p className="text-3xl font-bold text-yellow-700 mb-1">2</p>
               <p className="text-sm text-yellow-600">Variations Detected</p>
             </div>
-            <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+            <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center hover-scale">
               <p className="text-3xl font-bold text-red-700 mb-1">2</p>
               <p className="text-sm text-red-600">Non-Standard Issues</p>
             </div>
           </div>
 
+          {/* Benchmark & Financial Impact - MOVED UP */}
+          <div id="financial-section" className="grid grid-cols-1 lg:grid-cols-2 gap-8 scroll-mt-20">
+            {/* Benchmark */}
+            <Card className="p-6 border-border animate-fade-in">
+              <h2 className="text-2xl font-bold text-foreground mb-4 flex items-center gap-2">
+                <TrendingUp className="w-6 h-6 text-primary" />
+                Benchmark Analysis
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger>
+                      <Info className="w-4 h-4 text-muted-foreground" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="w-64">Compare proposed rates against historical contracts and market data</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </h2>
+              <div className="space-y-3">
+                {providers.map((provider, idx) => (
+                  <div key={idx} className="space-y-2 animate-fade-in" style={{ animationDelay: `${idx * 100}ms` }}>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className={provider.status === "proposed" ? "font-semibold text-foreground" : "text-muted-foreground"}>
+                        {provider.name}
+                      </span>
+                      <span className={provider.status === "proposed" ? "font-bold text-red-600" : "text-foreground"}>
+                        ₹{provider.rate.toLocaleString()}
+                      </span>
+                    </div>
+                    <div className="relative h-8 bg-secondary rounded-md overflow-hidden">
+                      <div 
+                        className={`h-full rounded-md transition-all ${provider.status === "proposed" ? "bg-red-500" : "bg-primary"}`}
+                        style={{ width: `${(provider.rate / 4200) * 100}%` }}
+                      ></div>
+                      <span className="absolute inset-0 flex items-center px-3 text-xs text-white font-medium">
+                        {provider.year} {provider.status === "proposed" && "• Proposed"}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-md">
+                <p className="text-sm text-red-700">
+                  <strong>Alert:</strong> Proposed rate is <strong>14% higher</strong> than similar providers.
+                </p>
+                <p className="text-xs text-red-600 mt-1">
+                  Recommendation: Negotiate down to ₹3,600-₹3,900 range for market competitiveness
+                </p>
+              </div>
+            </Card>
+
+            {/* Financial Impact Simulator */}
+            <Card className="p-6 border-border animate-fade-in" style={{ animationDelay: "100ms" }}>
+              <h2 className="text-2xl font-bold text-foreground mb-4 flex items-center gap-2">
+                <Calculator className="w-6 h-6 text-primary" />
+                Financial Impact Simulator
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger>
+                      <Info className="w-4 h-4 text-muted-foreground" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="w-64">Adjust rates and escalation to see real-time financial impact</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </h2>
+              <div className="space-y-4 mb-6">
+                <div className="space-y-2">
+                  <Label htmlFor="rate" className="text-sm">Base Rate (Per Diem)</Label>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm">₹</span>
+                    <Input
+                      id="rate"
+                      type="number"
+                      value={baseRate}
+                      onChange={(e) => setBaseRate(Number(e.target.value))}
+                      className="flex-1"
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground">Playbook recommended: ₹3,600-₹3,900</p>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="esc" className="text-sm">Annual Escalation</Label>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      id="esc"
+                      type="number"
+                      value={escalation}
+                      onChange={(e) => setEscalation(Number(e.target.value))}
+                      className="flex-1"
+                    />
+                    <span className="text-sm">%</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">Playbook maximum: 5%</p>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <div className="flex items-center justify-between p-3 bg-muted rounded-md transition-all hover:bg-muted/70">
+                  <span className="text-sm font-medium">Year 1</span>
+                  <span className="text-lg font-bold">₹{impact.year1} Cr</span>
+                </div>
+                <div className="flex items-center justify-between p-3 bg-muted rounded-md transition-all hover:bg-muted/70">
+                  <span className="text-sm font-medium">Year 2</span>
+                  <span className="text-lg font-bold">₹{impact.year2} Cr</span>
+                </div>
+                <div className="flex items-center justify-between p-3 bg-muted rounded-md transition-all hover:bg-muted/70">
+                  <span className="text-sm font-medium">Year 3</span>
+                  <span className="text-lg font-bold">₹{impact.year3} Cr</span>
+                </div>
+                <div className="p-4 bg-primary text-primary-foreground rounded-md">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">Total Contract Value</span>
+                    <span className="text-2xl font-bold">₹{impact.total} Cr</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-4 p-4 bg-red-50 border-2 border-red-300 rounded-md">
+                <div className="flex items-start gap-3">
+                  <AlertTriangle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-semibold text-red-900 mb-1">Material Impact Warning</p>
+                    <p className="text-xs text-red-700">
+                      <strong>+₹19.4 Cr annually</strong> if accepted as drafted vs. playbook rates.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </Card>
+          </div>
+
+          {/* Compliance Alerts */}
+          <Card id="compliance-section" className="p-6 border-border scroll-mt-20">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
+                <AlertTriangle className="w-6 h-6 text-red-600" />
+                Compliance Alerts
+              </h2>
+              <Badge variant="outline" className="bg-red-100 text-red-700 border-red-200">
+                2 High Severity
+              </Badge>
+            </div>
+            <div className="space-y-4">
+              {alerts.map((alert, idx) => (
+                <Card key={idx} className="p-6 border-l-4 animate-fade-in" style={{ 
+                  borderLeftColor: alert.severity === "high" ? "rgb(220, 38, 38)" : "rgb(234, 179, 8)",
+                  animationDelay: `${idx * 100}ms`
+                }}>
+                  <div className="flex gap-4">
+                    <div className="flex-shrink-0">
+                      {alert.severity === "high" ? (
+                        <AlertTriangle className="w-6 h-6 text-red-600" />
+                      ) : (
+                        <AlertTriangle className="w-6 h-6 text-yellow-600" />
+                      )}
+                    </div>
+                    <div className="flex-1 space-y-3">
+                      <div>
+                        <div className="flex items-center gap-3 mb-2">
+                          <h3 className="text-lg font-semibold text-foreground">{alert.title}</h3>
+                          <div className="flex items-center gap-2">
+                            <span className={`text-xs px-2 py-1 rounded-full ${
+                              alert.severity === "high" 
+                                ? "bg-red-100 text-red-700" 
+                                : "bg-yellow-100 text-yellow-700"
+                            }`}>
+                              SEVERITY {alert.severity === "high" ? "5/5" : "3/5"}
+                            </span>
+                            <span className="text-xs px-2 py-1 rounded-full bg-red-100 text-red-700">
+                              ₹2.4 Cr impact
+                            </span>
+                          </div>
+                        </div>
+                        <p className="text-muted-foreground text-sm mb-2">{alert.description}</p>
+                        
+                        {/* Side by Side Comparison */}
+                        <div className="grid grid-cols-2 gap-4 mb-3">
+                          <div className="p-3 bg-red-50 border border-red-200 rounded-md">
+                            <p className="text-xs font-semibold text-red-900 mb-1">Provider Language</p>
+                            <p className="text-sm text-red-700">{alert.description}</p>
+                          </div>
+                          <div className="p-3 bg-green-50 border border-green-200 rounded-md">
+                            <p className="text-xs font-semibold text-green-900 mb-1">Recommended Fallback</p>
+                            <p className="text-sm text-green-700">{alert.fallback}</p>
+                          </div>
+                        </div>
+
+                        <div className="bg-amber-50 border border-amber-200 rounded-md p-3">
+                          <p className="text-sm text-amber-700">
+                            <strong>Impact:</strong> {alert.impact}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex gap-2">
+                        <Button size="sm" className="bg-green-600 hover:bg-green-700">
+                          Apply Fallback Clause
+                        </Button>
+                        <Button size="sm" variant="outline">
+                          View Past Instances
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+            <Button variant="outline" className="w-full mt-4">
+              Preview Contract After Applying All Fallbacks
+            </Button>
+          </Card>
+
           {/* Clause Intelligence */}
           <Card className="p-6 border-border">
-            <h2 className="text-2xl font-bold text-foreground mb-4 flex items-center gap-2">
-              <FileText className="w-6 h-6 text-primary" />
-              Clause Intelligence
-            </h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
+                <FileText className="w-6 h-6 text-primary" />
+                Clause Intelligence
+              </h2>
+              <div className="flex items-center gap-2">
+                <Select value={riskFilter} onValueChange={setRiskFilter}>
+                  <SelectTrigger className="w-32">
+                    <SelectValue placeholder="Risk" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Risk</SelectItem>
+                    <SelectItem value="low">Low</SelectItem>
+                    <SelectItem value="medium">Medium</SelectItem>
+                    <SelectItem value="high">High</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="w-40">
+                    <SelectValue placeholder="Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Status</SelectItem>
+                    <SelectItem value="compliant">Compliant</SelectItem>
+                    <SelectItem value="variation">Variation</SelectItem>
+                    <SelectItem value="non-standard">Non-Standard</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button size="sm" variant="outline" onClick={handleAcceptCompliant} className="gap-1">
+                  <CheckCheck className="w-4 h-4" />
+                  Accept All Compliant
+                </Button>
+              </div>
+            </div>
             <div className="bg-card border border-border rounded-lg overflow-hidden">
               <Table>
                 <TableHeader>
@@ -243,8 +528,16 @@ const UploadContract = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {clauses.map((clause, idx) => (
-                    <TableRow key={idx} className="hover:bg-muted/30">
+                  {filteredClauses.map((clause, idx) => (
+                    <TableRow 
+                      key={idx} 
+                      className="hover:bg-muted/30 cursor-pointer transition-colors animate-fade-in"
+                      style={{ animationDelay: `${idx * 50}ms` }}
+                      onClick={() => toast({
+                        title: clause.title,
+                        description: `View details and ${clause.lastSeen}`,
+                      })}
+                    >
                       <TableCell className="font-medium text-foreground">{clause.title}</TableCell>
                       <TableCell>
                         <Badge variant="outline" className={getRiskColor(clause.risk)}>
@@ -269,172 +562,6 @@ const UploadContract = () => {
             </div>
           </Card>
 
-          {/* Compliance Alerts */}
-          <Card className="p-6 border-border">
-            <h2 className="text-2xl font-bold text-foreground mb-4 flex items-center gap-2">
-              <AlertTriangle className="w-6 h-6 text-red-600" />
-              Compliance Alerts
-            </h2>
-            <div className="space-y-4">
-              {alerts.map((alert, idx) => (
-                <Card key={idx} className="p-6 border-l-4" style={{ 
-                  borderLeftColor: alert.severity === "high" ? "rgb(220, 38, 38)" : "rgb(234, 179, 8)" 
-                }}>
-                  <div className="flex gap-4">
-                    <div className="flex-shrink-0">
-                      {alert.severity === "high" ? (
-                        <AlertTriangle className="w-6 h-6 text-red-600" />
-                      ) : (
-                        <AlertTriangle className="w-6 h-6 text-yellow-600" />
-                      )}
-                    </div>
-                    <div className="flex-1 space-y-3">
-                      <div>
-                        <div className="flex items-center gap-3 mb-2">
-                          <h3 className="text-lg font-semibold text-foreground">{alert.title}</h3>
-                          <span className={`text-xs px-2 py-1 rounded-full ${
-                            alert.severity === "high" 
-                              ? "bg-red-100 text-red-700" 
-                              : "bg-yellow-100 text-yellow-700"
-                          }`}>
-                            {alert.severity.toUpperCase()} SEVERITY
-                          </span>
-                        </div>
-                        <p className="text-muted-foreground text-sm mb-2">{alert.description}</p>
-                        <div className="bg-red-50 border border-red-200 rounded-md p-3 mb-3">
-                          <p className="text-sm text-red-700">
-                            <strong>Impact:</strong> {alert.impact}
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="bg-green-50 border border-green-200 rounded-md p-4">
-                        <div className="flex items-start gap-2 mb-2">
-                          <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-                          <div>
-                            <p className="font-medium text-green-800 mb-1 text-sm">Recommended Fallback Clause</p>
-                            <p className="text-sm text-green-700">{alert.fallback}</p>
-                          </div>
-                        </div>
-                        <Button size="sm" className="mt-2 bg-green-600 hover:bg-green-700">
-                          Apply Fallback Clause
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                </Card>
-              ))}
-            </div>
-          </Card>
-
-          {/* Benchmark & Financial Impact Side by Side */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Benchmark */}
-            <Card className="p-6 border-border">
-              <h2 className="text-2xl font-bold text-foreground mb-4 flex items-center gap-2">
-                <TrendingUp className="w-6 h-6 text-primary" />
-                Benchmark Analysis
-              </h2>
-              <div className="space-y-3">
-                {providers.map((provider, idx) => (
-                  <div key={idx} className="space-y-2">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className={provider.status === "proposed" ? "font-semibold text-foreground" : "text-muted-foreground"}>
-                        {provider.name}
-                      </span>
-                      <span className={provider.status === "proposed" ? "font-bold text-red-600" : "text-foreground"}>
-                        ₹{provider.rate.toLocaleString()}
-                      </span>
-                    </div>
-                    <div className="relative h-8 bg-secondary rounded-md overflow-hidden">
-                      <div 
-                        className={`h-full rounded-md ${provider.status === "proposed" ? "bg-red-500" : "bg-primary"}`}
-                        style={{ width: `${(provider.rate / 4200) * 100}%` }}
-                      ></div>
-                      <span className="absolute inset-0 flex items-center px-3 text-xs text-white font-medium">
-                        {provider.year} {provider.status === "proposed" && "• Proposed"}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-md">
-                <p className="text-sm text-red-700">
-                  <strong>Alert:</strong> Proposed rate is <strong>14% higher</strong> than similar providers in this region.
-                </p>
-              </div>
-            </Card>
-
-            {/* Financial Impact */}
-            <Card className="p-6 border-border">
-              <h2 className="text-2xl font-bold text-foreground mb-4 flex items-center gap-2">
-                <Calculator className="w-6 h-6 text-primary" />
-                Financial Impact
-              </h2>
-              <div className="space-y-4 mb-6">
-                <div className="space-y-2">
-                  <Label htmlFor="rate" className="text-sm">Base Rate (Per Diem)</Label>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm">₹</span>
-                    <Input
-                      id="rate"
-                      type="number"
-                      value={baseRate}
-                      onChange={(e) => setBaseRate(Number(e.target.value))}
-                      className="flex-1"
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="esc" className="text-sm">Annual Escalation</Label>
-                  <div className="flex items-center gap-2">
-                    <Input
-                      id="esc"
-                      type="number"
-                      value={escalation}
-                      onChange={(e) => setEscalation(Number(e.target.value))}
-                      className="flex-1"
-                    />
-                    <span className="text-sm">%</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                <div className="flex items-center justify-between p-3 bg-muted rounded-md">
-                  <span className="text-sm font-medium">Year 1</span>
-                  <span className="text-lg font-bold">₹{impact.year1} Cr</span>
-                </div>
-                <div className="flex items-center justify-between p-3 bg-muted rounded-md">
-                  <span className="text-sm font-medium">Year 2</span>
-                  <span className="text-lg font-bold">₹{impact.year2} Cr</span>
-                </div>
-                <div className="flex items-center justify-between p-3 bg-muted rounded-md">
-                  <span className="text-sm font-medium">Year 3</span>
-                  <span className="text-lg font-bold">₹{impact.year3} Cr</span>
-                </div>
-                <div className="p-4 bg-primary text-primary-foreground rounded-md">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">Total Value</span>
-                    <span className="text-2xl font-bold">₹{impact.total} Cr</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-4 p-4 bg-red-50 border-2 border-red-300 rounded-md">
-                <div className="flex items-start gap-3">
-                  <AlertTriangle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <p className="text-sm font-semibold text-red-900 mb-1">Material Impact Warning</p>
-                    <p className="text-xs text-red-700">
-                      <strong>+₹19.4 Cr annually</strong> if accepted as drafted vs. playbook rates.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </Card>
-          </div>
-
           {/* AI Co-Pilot Section */}
           <Card className="p-6 border-border">
             <h2 className="text-2xl font-bold text-foreground mb-4 flex items-center gap-2">
@@ -451,7 +578,9 @@ const UploadContract = () => {
                   <MessageSquare className="w-4 h-4" />
                   Open Full Co-Pilot Chat
                 </Button>
-                <Button variant="outline">Quick Question</Button>
+                <Button variant="outline">Generate Negotiation Email</Button>
+                <Button variant="outline">Generate Talking Points</Button>
+                <Button variant="outline">Summarize Changes</Button>
               </div>
               <div className="grid grid-cols-2 gap-2">
                 {[
@@ -480,7 +609,7 @@ const UploadContract = () => {
               <Button variant="outline" onClick={() => navigate("/redlining")} className="gap-2">
                 Start Redlining
               </Button>
-              <Button onClick={() => navigate("/approvals")} className="gap-2">
+              <Button onClick={() => navigate("/approvals")} className="gap-2 hover-scale">
                 Submit for Approval
               </Button>
             </div>
