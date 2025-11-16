@@ -92,7 +92,7 @@ const Dashboard = () => {
                   </div>
                   <div className="flex items-center gap-4">
                     <span className={`text-xs px-2 py-1 rounded-full ${
-                      contract.priority === 'high' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'
+                      contract.days >= 7 ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'
                     }`}>
                       {contract.days} days old
                     </span>
