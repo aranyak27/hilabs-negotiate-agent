@@ -13,6 +13,7 @@ import CoPilot from "./pages/CoPilot";
 import Redlining from "./pages/Redlining";
 import Approvals from "./pages/Approvals";
 import Summary from "./pages/Summary";
+import Repository from "./pages/Repository";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -26,6 +27,7 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Dashboard />} />
           <Route path="/upload" element={<UploadContract />} />
+          <Route path="/repository" element={<Repository />} />
           <Route path="/clauses" element={<ClauseIntelligence />} />
           <Route path="/compliance" element={<Compliance />} />
           <Route path="/benchmark" element={<Benchmark />} />
