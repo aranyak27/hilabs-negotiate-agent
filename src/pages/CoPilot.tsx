@@ -629,18 +629,270 @@ Market Positioning
           </div>
         </div>
 
-          {/* Two-Mode CTA Bar */}
-          <Tabs value={mode} onValueChange={(v) => setMode(v as "quick" | "chat")} className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mb-6">
-              <TabsTrigger value="quick" className="gap-2">
-                <Sparkles className="w-4 h-4" />
-                Quick Outputs
-              </TabsTrigger>
-              <TabsTrigger value="chat" className="gap-2">
-                <MessageSquare className="w-4 h-4" />
-                Full Co-Pilot Chat
-              </TabsTrigger>
-            </TabsList>
+          {/* Contract Insights Mode - Show Detailed Analysis */}
+          {insightMode === "contract" && contractContext && (
+            <div className="space-y-6">
+              {/* Contract Context Panel */}
+              <Card className="bg-accent/50 border-border">
+                <div className="p-4">
+                  <div className="flex items-start justify-between mb-3">
+                    <div>
+                      <h3 className="text-sm font-semibold text-foreground mb-1">{contractContext.provider}</h3>
+                      <p className="text-xs text-muted-foreground flex items-center gap-1">
+                        <Calendar className="w-3 h-3" />
+                        Last modified: {contractContext.lastModified}
+                      </p>
+                    </div>
+                    <Badge variant={contractContext.riskLevel === "high" ? "destructive" : "secondary"}>
+                      {contractContext.riskLevel.toUpperCase()} RISK
+                    </Badge>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3 mb-3">
+                    <div className="flex items-center gap-2">
+                      <AlertCircle className="w-4 h-4 text-destructive" />
+                      <span className="text-xs text-foreground"><span className="font-semibold">{contractContext.openRisks}</span> open risks</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <TrendingUp className="w-4 h-4 text-green-600" />
+                      <span className="text-xs text-foreground">Potential savings: <span className="font-semibold">{contractContext.potentialSavings}</span></span>
+                    </div>
+                  </div>
+                  <p className="text-xs text-muted-foreground italic flex items-center gap-1">
+                    <Sparkles className="w-3 h-3" />
+                    AI grounded to this contract + playbook + past deals + benchmarks
+                  </p>
+                </div>
+              </Card>
+
+              {/* Detailed Contract Analysis */}
+              <div className="grid gap-6">
+                {/* Key Terms & Pricing */}
+                <Card>
+                  <div className="p-6">
+                    <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+                      <BarChart className="w-5 h-5 text-primary" />
+                      Key Terms & Pricing Analysis
+                    </h3>
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <p className="text-sm text-muted-foreground mb-1">Base Rate (Proposed)</p>
+                          <p className="text-2xl font-bold text-foreground">₹4,200 <span className="text-sm font-normal text-muted-foreground">per diem</span></p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-muted-foreground mb-1">Annual Escalation</p>
+                          <p className="text-2xl font-bold text-destructive">8% <span className="text-sm font-normal text-muted-foreground">per year</span></p>
+                        </div>
+                      </div>
+                      <div className="pt-4 border-t border-border">
+                        <p className="text-sm font-medium text-foreground mb-2">Market Comparison</p>
+                        <div className="space-y-2">
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm text-muted-foreground">Market Average Rate</span>
+                            <span className="text-sm font-semibold text-foreground">₹3,575</span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm text-muted-foreground">Apollo Proposal Premium</span>
+                            <span className="text-sm font-semibold text-destructive">+17% above market</span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm text-muted-foreground">Market Escalation Range</span>
+                            <span className="text-sm font-semibold text-foreground">4.5% - 5.0%</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+
+                {/* High Risk Clauses */}
+                <Card>
+                  <div className="p-6">
+                    <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+                      <AlertCircle className="w-5 h-5 text-destructive" />
+                      High Risk Clauses
+                    </h3>
+                    <div className="space-y-4">
+                      <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
+                        <div className="flex items-start gap-3">
+                          <Badge variant="destructive" className="mt-0.5">HIGH</Badge>
+                          <div className="flex-1">
+                            <h4 className="text-sm font-semibold text-foreground mb-1">8% Annual Escalation Clause</h4>
+                            <p className="text-sm text-muted-foreground mb-2">Clause 4.2 - Price Escalation</p>
+                            <p className="text-sm text-foreground mb-2">
+                              The proposed 8% annual escalation is 60% higher than market standard (5%) and significantly above medical inflation rate of 6.2%.
+                            </p>
+                            <p className="text-sm font-medium text-foreground">Financial Impact: ₹12.8 Cr over 3 years</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
+                        <div className="flex items-start gap-3">
+                          <Badge variant="destructive" className="mt-0.5">HIGH</Badge>
+                          <div className="flex-1">
+                            <h4 className="text-sm font-semibold text-foreground mb-1">Unlimited Liability Clause</h4>
+                            <p className="text-sm text-muted-foreground mb-2">Clause 8.1 - Indemnification</p>
+                            <p className="text-sm text-foreground mb-2">
+                              No cap on liability exposure for claim processing delays. Standard market practice includes caps at 2x annual contract value.
+                            </p>
+                            <p className="text-sm font-medium text-foreground">Risk: Unlimited financial exposure</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
+                        <div className="flex items-start gap-3">
+                          <Badge variant="secondary" className="mt-0.5 bg-yellow-500/20">MEDIUM</Badge>
+                          <div className="flex-1">
+                            <h4 className="text-sm font-semibold text-foreground mb-1">Restrictive Termination Rights</h4>
+                            <p className="text-sm text-muted-foreground mb-2">Clause 12.3 - Termination</p>
+                            <p className="text-sm text-foreground mb-2">
+                              Requires 180-day notice with 6-month penalty payment. Industry standard is 90-day notice without penalty.
+                            </p>
+                            <p className="text-sm font-medium text-foreground">Risk: Reduced flexibility to exit</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+
+                {/* Recommendations */}
+                <Card>
+                  <div className="p-6">
+                    <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+                      <TrendingUp className="w-5 h-5 text-green-600" />
+                      Negotiation Recommendations
+                    </h3>
+                    <div className="space-y-4">
+                      <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg">
+                        <h4 className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2">
+                          <span className="flex items-center justify-center w-6 h-6 rounded-full bg-green-500/20 text-green-600 text-xs font-bold">1</span>
+                          Counter-Offer: ₹3,850 Base Rate
+                        </h4>
+                        <p className="text-sm text-muted-foreground mb-2">
+                          Propose ₹3,850 per diem (+7.7% above market mean). This recognizes Apollo's premium positioning while staying within 1 standard deviation of peer rates.
+                        </p>
+                        <p className="text-sm font-medium text-green-600">Potential Savings: ₹4.2 Cr annually</p>
+                      </div>
+
+                      <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg">
+                        <h4 className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2">
+                          <span className="flex items-center justify-center w-6 h-6 rounded-full bg-green-500/20 text-green-600 text-xs font-bold">2</span>
+                          Escalation: 5% + 2% Quality Incentive
+                        </h4>
+                        <p className="text-sm text-muted-foreground mb-2">
+                          Replace fixed 8% with 5% base escalation (matching market) plus 2% quality-based incentive tied to NABH scores and patient satisfaction.
+                        </p>
+                        <p className="text-sm font-medium text-green-600">Benefit: Aligns incentives with outcomes</p>
+                      </div>
+
+                      <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg">
+                        <h4 className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2">
+                          <span className="flex items-center justify-center w-6 h-6 rounded-full bg-green-500/20 text-green-600 text-xs font-bold">3</span>
+                          Cap Liability at 2x Annual Contract Value
+                        </h4>
+                        <p className="text-sm text-muted-foreground mb-2">
+                          Add liability cap following industry standard practice. Reference similar provisions in Max Healthcare and Fortis contracts.
+                        </p>
+                        <p className="text-sm font-medium text-green-600">Benefit: Limits financial exposure</p>
+                      </div>
+
+                      <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg">
+                        <h4 className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2">
+                          <span className="flex items-center justify-center w-6 h-6 rounded-full bg-green-500/20 text-green-600 text-xs font-bold">4</span>
+                          Reduce Notice Period to 90 Days
+                        </h4>
+                        <p className="text-sm text-muted-foreground mb-2">
+                          Request standard 90-day termination notice without penalty payment. This provides operational flexibility while maintaining reasonable transition time.
+                        </p>
+                        <p className="text-sm font-medium text-green-600">Benefit: Increased contract flexibility</p>
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+
+                {/* Peer Comparison */}
+                <Card>
+                  <div className="p-6">
+                    <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+                      <BarChart className="w-5 h-5 text-primary" />
+                      Peer Hospital Comparison
+                    </h3>
+                    <div className="space-y-3">
+                      <div className="grid grid-cols-4 gap-4 pb-2 border-b border-border text-xs font-semibold text-muted-foreground">
+                        <div>Hospital</div>
+                        <div>Base Rate</div>
+                        <div>Escalation</div>
+                        <div>vs Apollo</div>
+                      </div>
+                      <div className="grid grid-cols-4 gap-4 items-center">
+                        <div className="text-sm font-medium text-foreground">Max Healthcare (Delhi)</div>
+                        <div className="text-sm text-foreground">₹3,600</div>
+                        <div className="text-sm text-foreground">5%</div>
+                        <div className="text-sm text-green-600 font-semibold">-14%</div>
+                      </div>
+                      <div className="grid grid-cols-4 gap-4 items-center">
+                        <div className="text-sm font-medium text-foreground">Fortis Memorial</div>
+                        <div className="text-sm text-foreground">₹3,500</div>
+                        <div className="text-sm text-foreground">5%</div>
+                        <div className="text-sm text-green-600 font-semibold">-17%</div>
+                      </div>
+                      <div className="grid grid-cols-4 gap-4 items-center">
+                        <div className="text-sm font-medium text-foreground">Manipal Hospitals</div>
+                        <div className="text-sm text-foreground">₹3,400</div>
+                        <div className="text-sm text-foreground">4.5%</div>
+                        <div className="text-sm text-green-600 font-semibold">-19%</div>
+                      </div>
+                      <div className="grid grid-cols-4 gap-4 items-center">
+                        <div className="text-sm font-medium text-foreground">Apollo Chennai</div>
+                        <div className="text-sm text-foreground">₹3,800</div>
+                        <div className="text-sm text-foreground">5%</div>
+                        <div className="text-sm text-green-600 font-semibold">-10%</div>
+                      </div>
+                      <div className="grid grid-cols-4 gap-4 items-center pt-2 border-t border-border">
+                        <div className="text-sm font-bold text-foreground">Apollo Bangalore (Proposed)</div>
+                        <div className="text-sm font-bold text-destructive">₹4,200</div>
+                        <div className="text-sm font-bold text-destructive">8%</div>
+                        <div className="text-sm font-bold text-destructive">BASELINE</div>
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+
+                {/* Action Buttons */}
+                <div className="flex gap-3">
+                  <Button className="flex-1" size="lg" onClick={() => handleQuickAction("email")}>
+                    <Mail className="w-4 h-4 mr-2" />
+                    Draft Negotiation Email
+                  </Button>
+                  <Button variant="outline" className="flex-1" size="lg" onClick={() => handleQuickAction("talking-points")}>
+                    <MessageCircle className="w-4 h-4 mr-2" />
+                    Generate Talking Points
+                  </Button>
+                  <Button variant="outline" size="lg" onClick={() => setInsightMode("general")}>
+                    Ask Co-Pilot
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* General Insights Mode - Show Chat Interface */}
+          {insightMode === "general" && (
+            <Tabs value={mode} onValueChange={(v) => setMode(v as "quick" | "chat")} className="w-full">
+              <TabsList className="grid w-full grid-cols-2 mb-6">
+                <TabsTrigger value="quick" className="gap-2">
+                  <Sparkles className="w-4 h-4" />
+                  Quick Outputs
+                </TabsTrigger>
+                <TabsTrigger value="chat" className="gap-2">
+                  <MessageSquare className="w-4 h-4" />
+                  Full Co-Pilot Chat
+                </TabsTrigger>
+              </TabsList>
 
             <TabsContent value="quick" className="space-y-6">
               {/* Quick Action Buttons */}
@@ -895,6 +1147,7 @@ Market Positioning
               </Card>
             </TabsContent>
           </Tabs>
+          )}
       </main>
 
       <CoPilotOutputModal
