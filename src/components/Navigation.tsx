@@ -5,11 +5,6 @@ import { cn } from "@/lib/utils";
 const navItems = [
   { path: "/", icon: Home, label: "Dashboard" },
   { path: "/upload", icon: Upload, label: "Upload" },
-  { path: "/clauses", icon: FileText, label: "Clauses" },
-  { path: "/compliance", icon: Shield, label: "Compliance" },
-  { path: "/benchmark", icon: TrendingUp, label: "Benchmark" },
-  { path: "/simulator", icon: Calculator, label: "Simulator" },
-  { path: "/copilot", icon: MessageSquare, label: "Co-Pilot" },
   { path: "/redlining", icon: FileEdit, label: "Redlining" },
   { path: "/approvals", icon: CheckSquare, label: "Approvals" },
   { path: "/summary", icon: FileDown, label: "Summary" },
