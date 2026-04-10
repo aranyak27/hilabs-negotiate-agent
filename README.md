@@ -1,6 +1,6 @@
 # Welcome to your Lovable project
 
-## Project info
+## Project info: https://hi-negotiate-clarity.lovable.app
 
 **URL**: https://lovable.dev/projects/9f9853d0-a69c-45ae-b415-b29483eceb00
 
