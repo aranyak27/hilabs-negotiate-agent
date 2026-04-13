@@ -61,7 +61,7 @@ const Index = () => {
         <div className="max-w-7xl mx-auto px-6 py-8">
           <div className="space-y-2">
             <div className="text-sm font-medium text-primary tracking-wider uppercase">
-              HiLabs Platform
+              NegotiateAI Platform
             </div>
             <h1 className="text-4xl font-bold text-foreground tracking-tight">
               Core Features of the Negotiation Assist Platform
@@ -93,7 +93,7 @@ const Index = () => {
         <div className="max-w-7xl mx-auto px-6 py-8">
           <p className="text-center text-sm text-muted-foreground leading-relaxed max-w-4xl mx-auto">
             Helping every payer–provider negotiation become faster, smarter, and financially 
-            sound — the HiLabs way.
+            sound — the NegotiateAI way.
           </p>
         </div>
       </footer>

@@ -45,7 +45,7 @@ const Redlining = () => {
   const handleAcceptProposal = (idx: number, type: "provider" | "hilabs") => {
     setReviewedClauses([...reviewedClauses, idx]);
     toast({
-      title: `${type === "provider" ? "Provider" : "HiLabs"} proposal accepted`,
+      title: `${type === "provider" ? "Provider" : "NegotiateAI"} proposal accepted`,
       description: `${changes[idx].clause} updated successfully`,
     });
   };
@@ -161,7 +161,7 @@ const Redlining = () => {
 
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
-                      <p className="text-xs font-semibold text-primary uppercase">HiLabs Counter-Proposal</p>
+                      <p className="text-xs font-semibold text-primary uppercase">NegotiateAI Counter-Proposal</p>
                       <Badge className="bg-green-100 text-green-700 border-green-200" variant="outline">
                         AI-Suggested
                       </Badge>
@@ -208,7 +208,7 @@ const Redlining = () => {
                       onClick={() => handleAcceptProposal(idx, "hilabs")}
                       disabled={isReviewed}
                     >
-                      Accept HiLabs Proposal
+                      Accept NegotiateAI Proposal
                     </Button>
                     <Button 
                       size="sm" 
