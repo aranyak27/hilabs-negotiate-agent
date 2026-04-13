@@ -19,9 +19,9 @@ const Navigation = () => {
         <div className="flex items-center justify-between h-16">
           <Link to="/" className="flex items-center gap-2">
             <div className="w-9 h-9 bg-primary rounded-lg flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-base">HL</span>
+              <span className="text-primary-foreground font-bold text-base">NA</span>
             </div>
-            <span className="text-xl font-bold text-foreground">HiLabs</span>
+            <span className="text-xl font-bold text-foreground">NegotiateAI</span>
           </Link>
           
           <div className="flex gap-1">

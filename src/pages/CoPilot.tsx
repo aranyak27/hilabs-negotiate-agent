@@ -260,7 +260,7 @@ Looking forward to your response.
 
 Best regards,
 Sarah Chen
-Contract Negotiation Lead, HiLabs`;
+Contract Negotiation Lead, NegotiateAI`;
         break;
 
       case "talking-points":
@@ -622,7 +622,7 @@ We believe these terms create a sustainable, mutually beneficial partnership tha
 This counter-proposal is valid for 30 days from the date of submission.
 
 Respectfully submitted,
-HiLabs Contract Negotiation Team`;
+NegotiateAI Contract Negotiation Team`;
         break;
     }
 
