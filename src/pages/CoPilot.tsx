@@ -1019,7 +1019,6 @@ NegotiateAI Contract Negotiation Team`;
               {/* Enhanced Chat Interface */}
               <Card className="border-border">
                 <div className="h-[500px] flex flex-col">
-                  {/* Messages */}
                   <div className="flex-1 overflow-y-auto p-6 space-y-6">
                     {messages.map((msg, idx) => (
                       <div key={idx} className="space-y-3">
@@ -1032,41 +1031,28 @@ NegotiateAI Contract Negotiation Team`;
                         ) : (
                           <div className="space-y-3">
                             <div className="bg-accent/50 rounded-lg px-4 py-3">
-                              <p className="text-sm text-foreground">{msg.content}</p>
+                              <div className="text-sm text-foreground prose prose-sm dark:prose-invert max-w-none">
+                                <ReactMarkdown>{msg.content}</ReactMarkdown>
+                              </div>
                             </div>
-                            {msg.sources && (
-                              <div className="flex flex-wrap gap-2">
-                                {msg.sources.map((source, i) => (
-                                  <Badge key={i} variant="secondary" className="text-xs">
-                                    {source}
-                                  </Badge>
-                                ))}
-                              </div>
-                            )}
-                            {msg.actions && msg.actions.length > 0 && (
-                              <div className="flex flex-wrap gap-2">
-                                {msg.actions.map((action, i) => (
-                                  <Button
-                                    key={i}
-                                    variant="ghost"
-                                    onClick={action.onClick}
-                                    className="text-xs h-auto py-2 px-3 border border-border hover:bg-accent hover:border-primary"
-                                  >
-                                    {action.label}
-                                  </Button>
-                                ))}
-                              </div>
-                            )}
                           </div>
                         )}
                       </div>
                     ))}
+                    {isLoading && messages[messages.length - 1]?.role === "user" && (
+                      <div className="flex justify-start">
+                        <div className="bg-accent rounded-lg p-4 flex items-center gap-2">
+                          <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                          <span className="text-sm text-muted-foreground">Thinking...</span>
+                        </div>
+                      </div>
+                    )}
+                    <div ref={messagesEndRef} />
                   </div>
 
-                  {/* Dynamic Suggested Prompts */}
-                  {messages.length === 1 && (
+                  {messages.length === 1 && !isLoading && (
                     <div className="px-6 pb-4">
-                      <p className="text-xs text-muted-foreground mb-2">Suggested prompts based on contract analysis:</p>
+                      <p className="text-xs text-muted-foreground mb-2">Suggested prompts:</p>
                       <div className="grid grid-cols-2 gap-2">
                         {getDynamicSuggestions().map((prompt, idx) => (
                           <button
@@ -1081,18 +1067,18 @@ NegotiateAI Contract Negotiation Team`;
                     </div>
                   )}
 
-                  {/* Input */}
                   <div className="border-t border-border p-4 bg-background">
                     <div className="flex gap-2">
                       <Input
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
-                        onKeyPress={(e) => e.key === "Enter" && handleSend()}
+                        onKeyDown={(e) => e.key === "Enter" && handleSend()}
                         placeholder="Ask about risks, benchmarks, clauses, or negotiation strategies..."
                         className="flex-1"
+                        disabled={isLoading}
                       />
-                      <Button onClick={() => handleSend()} size="icon">
-                        <Send className="w-4 h-4" />
+                      <Button onClick={() => handleSend()} size="icon" disabled={isLoading}>
+                        {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                       </Button>
                     </div>
                   </div>
