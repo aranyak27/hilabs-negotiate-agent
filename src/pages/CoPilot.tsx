@@ -5,10 +5,11 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowRight, MessageSquare, Send, Mail, MessageCircle, FileText, TrendingDown, BarChart, AlertCircle, TrendingUp, Calendar, Sparkles, Upload } from "lucide-react";
+import { ArrowRight, MessageSquare, Send, Mail, MessageCircle, FileText, TrendingDown, BarChart, AlertCircle, TrendingUp, Calendar, Sparkles, Upload, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
+import ReactMarkdown from "react-markdown";
 
 interface Message {
   role: "user" | "assistant";
@@ -31,7 +32,9 @@ const CoPilot = () => {
     },
   ]);
   const [input, setInput] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const [followUpSuggestions, setFollowUpSuggestions] = useState<string[]>([]);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
   const [outputModal, setOutputModal] = useState<{ open: boolean; title: string; content: string; type: "email" | "talking-points" | "summary" | "justification" | "comparison" | "counter-proposal" }>({ 
     open: false, 
     title: "", 
@@ -629,74 +632,122 @@ NegotiateAI Contract Negotiation Team`;
     setOutputModal({ open: true, title, content, type });
   };
 
-  const handleSend = (message?: string) => {
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  const handleSend = async (message?: string) => {
     const userMessage = message || input;
-    if (!userMessage.trim()) return;
+    if (!userMessage.trim() || isLoading) return;
 
-    setMessages([...messages, { role: "user", content: userMessage }]);
+    const newMessages: Message[] = [...messages, { role: "user", content: userMessage }];
+    setMessages(newMessages);
     setInput("");
+    setIsLoading(true);
+    setFollowUpSuggestions([]);
 
-    // Simulate AI response
-    setTimeout(() => {
-      let response = "";
-      let sources: string[] = [];
-      let actions: { label: string; onClick: () => void }[] = [];
-      let suggestions: string[] = [];
+    try {
+      const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/negotiate-chat`;
 
-      if (userMessage.includes("Apollo last time") || userMessage.includes("high-risk")) {
-        response = "## Apollo Hospitals 2024 Contract Summary\n\nIn our 2024 contract with Apollo Hospitals Bangalore, we negotiated:\n\n• **Base rate**: ₹3,800 per diem (down from ₹4,100)\n• **Escalation**: 5% annual\n• **Termination**: 90-day notice period\n• **Quality metrics**: 10% of payments tied to NABH scores\n• **Dispute resolution**: ICADR arbitration in Mumbai\n\nThe negotiation took 21 days and saved an estimated **₹8.2 Cr** over the 3-year term.";
-        sources = ["Apollo 2024 Contract", "Historical Deal Database"];
-        actions = [
-          { label: "View Full Contract", onClick: () => navigate("/repository") },
-          { label: "Compare to Current Terms", onClick: () => handleQuickAction("comparison") },
-        ];
-        suggestions = [
-          "What were the key negotiation points?",
-          "How can we improve on the 2024 terms?",
-          "Draft email referencing historical agreement"
-        ];
-      } else if (userMessage.includes("escalation") || userMessage.includes("counter-proposal")) {
-        response = "## Escalation Justification\n\nHere's your negotiation justification for requesting **5% instead of 8%** escalation:\n\n### Market Benchmark\nMedical inflation in India averaged 6.2% in 2024. The proposed 8% exceeds market trends.\n\n### Comparable Contracts\n• Max Healthcare: 5%\n• Fortis: 5%\n• Manipal: 4.5%\n\nAll tier-1 hospitals accepted 5% or lower.\n\n### Financial Impact\nThe 3% difference equates to **₹4.8 Cr additional cost** over 3 years.\n\n**Recommendation**: Propose 5% escalation with a 2% quality incentive pool tied to patient outcomes.";
-        sources = ["Market Benchmark Report 2024", "Contract Database", "Negotiation Playbook"];
-        actions = [
-          { label: "Draft Counter-Proposal", onClick: () => alert("Generating counter-proposal...") },
-          { label: "Generate Email", onClick: () => handleQuickAction("email") },
-          { label: "Share with CFO", onClick: () => alert("Sharing justification with CFO...") }
-        ];
-        suggestions = [
-          "What are the risks of accepting 8%?",
-          "Show me quality incentive examples",
-          "Create CFO justification document"
-        ];
-      } else if (userMessage.includes("fallback") && userMessage.includes("termination")) {
-        response = "## Recommended Fallback Clause\n\n### Standard Playbook Language (Legal Approved)\n\n*\"Either party may terminate this Agreement with ninety (90) days written notice. In the event of termination, Provider shall continue to provide care for all patients currently under treatment for a transition period of up to six (6) months at the contracted rates to ensure care continuity.\"*\n\n### Justification\nThis clause protects patient care continuity while giving both parties adequate planning time. Used successfully in **14 similar contracts** in 2024.";
-        sources = ["Legal Playbook v3.2", "Contract Templates"];
-        actions = [
-          { label: "Apply Fallback Clause", onClick: () => alert("Applying clause to contract...") },
-          { label: "Send to Legal", onClick: () => alert("Forwarding to Legal team...") }
-        ];
-        suggestions = [
-          "What other termination clauses should we consider?",
-          "Show me provider pushback scenarios",
-          "Draft talking points for this clause"
-        ];
-      } else {
-        response = "I can help you with that. Based on our contract database and negotiation playbooks, I found relevant information.\n\n### Available Actions\n• Provide specific details on rates\n• Analyze contract clauses\n• Generate negotiation strategies\n• Compare with past deals\n\nWhat would you like to explore?";
-        sources = ["Contract Database", "Negotiation Playbook"];
-        actions = [
-          { label: "Show Benchmarks", onClick: () => handleQuickAction("comparison") },
-          { label: "Generate Talking Points", onClick: () => handleQuickAction("talking-points") }
-        ];
-        suggestions = [
-          "What are the key risks in this contract?",
-          "Compare rates with competitors",
-          "Draft counter-proposal email"
-        ];
+      const resp = await fetch(CHAT_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+        },
+        body: JSON.stringify({
+          messages: newMessages.map(m => ({ role: m.role, content: m.content })),
+          contractContext: contractContext || undefined,
+        }),
+      });
+
+      if (!resp.ok) {
+        const errorData = await resp.json().catch(() => ({ error: "AI service error" }));
+        toast({ title: "Error", description: errorData.error || "Failed to get response", variant: "destructive" });
+        setIsLoading(false);
+        return;
       }
 
-      setMessages(prev => [...prev, { role: "assistant", content: response, sources, actions }]);
-      setFollowUpSuggestions(suggestions);
-    }, 1000);
+      if (!resp.body) throw new Error("No response body");
+
+      const reader = resp.body.getReader();
+      const decoder = new TextDecoder();
+      let textBuffer = "";
+      let assistantSoFar = "";
+      let streamDone = false;
+
+      while (!streamDone) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        textBuffer += decoder.decode(value, { stream: true });
+
+        let newlineIndex: number;
+        while ((newlineIndex = textBuffer.indexOf("\n")) !== -1) {
+          let line = textBuffer.slice(0, newlineIndex);
+          textBuffer = textBuffer.slice(newlineIndex + 1);
+
+          if (line.endsWith("\r")) line = line.slice(0, -1);
+          if (line.startsWith(":") || line.trim() === "") continue;
+          if (!line.startsWith("data: ")) continue;
+
+          const jsonStr = line.slice(6).trim();
+          if (jsonStr === "[DONE]") { streamDone = true; break; }
+
+          try {
+            const parsed = JSON.parse(jsonStr);
+            const content = parsed.choices?.[0]?.delta?.content as string | undefined;
+            if (content) {
+              assistantSoFar += content;
+              setMessages(prev => {
+                const last = prev[prev.length - 1];
+                if (last?.role === "assistant") {
+                  return prev.map((m, i) => i === prev.length - 1 ? { ...m, content: assistantSoFar } : m);
+                }
+                return [...prev, { role: "assistant", content: assistantSoFar }];
+              });
+            }
+          } catch {
+            textBuffer = line + "\n" + textBuffer;
+            break;
+          }
+        }
+      }
+
+      // Flush remaining buffer
+      if (textBuffer.trim()) {
+        for (let raw of textBuffer.split("\n")) {
+          if (!raw) continue;
+          if (raw.endsWith("\r")) raw = raw.slice(0, -1);
+          if (raw.startsWith(":") || raw.trim() === "") continue;
+          if (!raw.startsWith("data: ")) continue;
+          const jsonStr = raw.slice(6).trim();
+          if (jsonStr === "[DONE]") continue;
+          try {
+            const parsed = JSON.parse(jsonStr);
+            const content = parsed.choices?.[0]?.delta?.content as string | undefined;
+            if (content) {
+              assistantSoFar += content;
+              setMessages(prev => {
+                const last = prev[prev.length - 1];
+                if (last?.role === "assistant") {
+                  return prev.map((m, i) => i === prev.length - 1 ? { ...m, content: assistantSoFar } : m);
+                }
+                return [...prev, { role: "assistant", content: assistantSoFar }];
+              });
+            }
+          } catch { /* ignore */ }
+        }
+      }
+    } catch (err) {
+      console.error("Chat error:", err);
+      toast({ title: "Error", description: "Failed to connect to AI. Please try again.", variant: "destructive" });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -914,7 +965,6 @@ NegotiateAI Contract Negotiation Team`;
                   {mode === "chat" && (
                     <Card className="border-border">
                       <div className="h-[500px] flex flex-col">
-                        {/* Messages */}
                         <div className="flex-1 overflow-y-auto p-6 space-y-6">
                           {messages.map((msg, idx) => (
                             <div 
@@ -922,48 +972,23 @@ NegotiateAI Contract Negotiation Team`;
                               className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
                             >
                               <div className={`max-w-[80%] ${msg.role === "user" ? "bg-primary text-primary-foreground" : "bg-accent text-foreground"} rounded-lg p-4`}>
-                                <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
-                                {msg.sources && msg.sources.length > 0 && (
-                                  <div className="mt-3 pt-3 border-t border-border/20">
-                                    <p className="text-xs opacity-70 mb-1">Sources:</p>
-                                    <div className="flex flex-wrap gap-1">
-                                      {msg.sources.map((source, i) => (
-                                        <Badge key={i} variant="secondary" className="text-xs">
-                                          {source}
-                                        </Badge>
-                                      ))}
-                                    </div>
-                                  </div>
-                                )}
+                                <div className="text-sm prose prose-sm dark:prose-invert max-w-none">
+                                  <ReactMarkdown>{msg.content}</ReactMarkdown>
+                                </div>
                               </div>
                             </div>
                           ))}
+                          {isLoading && messages[messages.length - 1]?.role === "user" && (
+                            <div className="flex justify-start">
+                              <div className="bg-accent rounded-lg p-4 flex items-center gap-2">
+                                <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                                <span className="text-sm text-muted-foreground">Analyzing...</span>
+                              </div>
+                            </div>
+                          )}
+                          <div ref={messagesEndRef} />
                         </div>
 
-                        {/* Follow-up Suggestions */}
-                        {followUpSuggestions.length > 0 && (
-                          <div className="px-6 py-3 border-t border-border">
-                            <p className="text-xs text-muted-foreground mb-2">Suggested follow-ups:</p>
-                            <div className="flex flex-wrap gap-2">
-                              {followUpSuggestions.map((suggestion, idx) => (
-                                <Button
-                                  key={idx}
-                                  variant="outline"
-                                  size="sm"
-                                  className="text-xs"
-                                  onClick={() => {
-                                    setInput(suggestion);
-                                    handleSend();
-                                  }}
-                                >
-                                  {suggestion}
-                                </Button>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Input */}
                         <div className="border-t border-border p-4">
                           <div className="flex gap-2">
                             <Input
@@ -972,9 +997,10 @@ NegotiateAI Contract Negotiation Team`;
                               onChange={(e) => setInput(e.target.value)}
                               onKeyDown={(e) => e.key === "Enter" && handleSend()}
                               className="flex-1"
+                              disabled={isLoading}
                             />
-                            <Button onClick={() => handleSend()} size="icon">
-                              <Send className="w-4 h-4" />
+                            <Button onClick={() => handleSend()} size="icon" disabled={isLoading}>
+                              {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                             </Button>
                           </div>
                         </div>
@@ -993,7 +1019,6 @@ NegotiateAI Contract Negotiation Team`;
               {/* Enhanced Chat Interface */}
               <Card className="border-border">
                 <div className="h-[500px] flex flex-col">
-                  {/* Messages */}
                   <div className="flex-1 overflow-y-auto p-6 space-y-6">
                     {messages.map((msg, idx) => (
                       <div key={idx} className="space-y-3">
@@ -1006,41 +1031,28 @@ NegotiateAI Contract Negotiation Team`;
                         ) : (
                           <div className="space-y-3">
                             <div className="bg-accent/50 rounded-lg px-4 py-3">
-                              <p className="text-sm text-foreground">{msg.content}</p>
+                              <div className="text-sm text-foreground prose prose-sm dark:prose-invert max-w-none">
+                                <ReactMarkdown>{msg.content}</ReactMarkdown>
+                              </div>
                             </div>
-                            {msg.sources && (
-                              <div className="flex flex-wrap gap-2">
-                                {msg.sources.map((source, i) => (
-                                  <Badge key={i} variant="secondary" className="text-xs">
-                                    {source}
-                                  </Badge>
-                                ))}
-                              </div>
-                            )}
-                            {msg.actions && msg.actions.length > 0 && (
-                              <div className="flex flex-wrap gap-2">
-                                {msg.actions.map((action, i) => (
-                                  <Button
-                                    key={i}
-                                    variant="ghost"
-                                    onClick={action.onClick}
-                                    className="text-xs h-auto py-2 px-3 border border-border hover:bg-accent hover:border-primary"
-                                  >
-                                    {action.label}
-                                  </Button>
-                                ))}
-                              </div>
-                            )}
                           </div>
                         )}
                       </div>
                     ))}
+                    {isLoading && messages[messages.length - 1]?.role === "user" && (
+                      <div className="flex justify-start">
+                        <div className="bg-accent rounded-lg p-4 flex items-center gap-2">
+                          <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                          <span className="text-sm text-muted-foreground">Thinking...</span>
+                        </div>
+                      </div>
+                    )}
+                    <div ref={messagesEndRef} />
                   </div>
 
-                  {/* Dynamic Suggested Prompts */}
-                  {messages.length === 1 && (
+                  {messages.length === 1 && !isLoading && (
                     <div className="px-6 pb-4">
-                      <p className="text-xs text-muted-foreground mb-2">Suggested prompts based on contract analysis:</p>
+                      <p className="text-xs text-muted-foreground mb-2">Suggested prompts:</p>
                       <div className="grid grid-cols-2 gap-2">
                         {getDynamicSuggestions().map((prompt, idx) => (
                           <button
@@ -1055,18 +1067,18 @@ NegotiateAI Contract Negotiation Team`;
                     </div>
                   )}
 
-                  {/* Input */}
                   <div className="border-t border-border p-4 bg-background">
                     <div className="flex gap-2">
                       <Input
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
-                        onKeyPress={(e) => e.key === "Enter" && handleSend()}
+                        onKeyDown={(e) => e.key === "Enter" && handleSend()}
                         placeholder="Ask about risks, benchmarks, clauses, or negotiation strategies..."
                         className="flex-1"
+                        disabled={isLoading}
                       />
-                      <Button onClick={() => handleSend()} size="icon">
-                        <Send className="w-4 h-4" />
+                      <Button onClick={() => handleSend()} size="icon" disabled={isLoading}>
+                        {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                       </Button>
                     </div>
                   </div>
